@@ -1,0 +1,72 @@
+version: "3.6"
+
+services:
+  mariadb:
+    container_name: mariadb
+    platform: linux/amd64
+    image: mariadb:latest
+    env_file:
+      - ./.env
+    environment:
+      - MYSQL_ROOT_HOST=%
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    networks:
+      - backend_net
+    # command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0
+    volumes:
+      - ./backend-sql-data:/var/lib/mysql
+    restart: always
+    expose:
+      - ${DATABASE_PORT}
+
+  redis:
+    image: daocloud.io/redis:latest
+    container_name: backend_redis
+    networks:
+      - backend_net
+    ports:
+      - 6379:6379
+
+  backend:
+    container_name: backend
+    platform: linux/amd64
+    build: ./backend
+    env_file:
+      - ./.env
+    links:
+    - mariadb:mariadb
+    - redis:redis
+    volumes:
+      - ./backend:/project
+      - ./logs:/project/logs
+    depends_on:
+      - mariadb
+    command: sh -c "/wait && ./docker-entrypoint.sh"
+    environment:
+      - DEBUG=${DEBUG}
+      - WAIT_HOSTS=mariadb:${DATABASE_PORT}
+      - WAIT_HOSTS_TIMEOUT=300
+      - WAIT_SLEEP_INTERVAL=15
+      - WAIT_HOST_CONNECT_TIMEOUT=20
+      - DB_ENGINE=django.db.backends.mysql
+      - DB_NAME=${MYSQL_DATABASE} # db name
+      - DB_USER=${MYSQL_USER} # db user
+      - DB_USER_PASSWORD=${MYSQL_PASSWORD} # db password
+      - DB_PORT=${DATABASE_PORT} # db port
+      - DB_HOST=mariadb # db host
+      - REDIS_HOST=redis://redis:6379 # redis host
+      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME} # superuser username
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD} # superuser password
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL} # superuser email
+    networks:
+        - backend_net
+    restart: always
+    ports:
+      - 80:8000
+
+networks:
+  backend_net:
+    driver: bridge
