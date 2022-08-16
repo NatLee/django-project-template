@@ -1,4 +1,4 @@
-version: "3.6"
+version: "3.9"
 
 services:
   mariadb:
@@ -33,18 +33,19 @@ services:
   backend:
     container_name: backend
     platform: linux/amd64
-    build: ./backend
+    build:
+      context: .
+      dockerfile: ./Dockerfile
     env_file:
       - ./.env
     links:
     - mariadb:mariadb
     - redis:redis
     volumes:
-      - ./backend:/project
-      - ./logs:/project/logs
+      - ./backend:/app
     depends_on:
       - mariadb
-    command: sh -c "/wait && ./docker-entrypoint.sh"
+    command: bash docker-entrypoint.sh
     environment:
       - DEBUG=${DEBUG}
       - WAIT_HOSTS=mariadb:${DATABASE_PORT}

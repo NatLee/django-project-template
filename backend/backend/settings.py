@@ -1,7 +1,6 @@
 from ast import literal_eval
 import os
 from pathlib import Path
-from config import sensitive
 import pymysql
 from datetime import timedelta
 
@@ -108,7 +107,23 @@ SWAGGER_SETTINGS = {
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = sensitive.SQL
+
+DATABASES = {
+    "default": {
+        "ENGINE": os.environ["DB_ENGINE"],
+        "NAME": os.environ["DB_NAME"],  # db name
+        "USER": os.environ["DB_USER"],  # db user
+        "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password
+        "HOST": os.environ["DB_HOST"],  # db host
+        "PORT": os.environ["DB_PORT"],  # db port
+    },
+    "OPTIONS": {"protocol": "TCP"},
+}
+
+"""
+REDIS
+"""
+REDIS_HOST = os.environ["REDIS_HOST"]
 
 
 # Password validation

@@ -5,6 +5,7 @@ logs
 backend-sql-data/
 .DS_Store
 desktop.ini
+*_initial.py
 
 
 # Byte-compiled / optimized / DLL files
