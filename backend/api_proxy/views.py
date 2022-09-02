@@ -8,11 +8,10 @@ import requests
 
 # Create your views here.
 
-from rest_framework.authentication import (
-    SessionAuthentication,
-    TokenAuthentication,
-)
+from rest_framework.authentication import SessionAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
+
 from rest_framework.views import APIView
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings
@@ -23,7 +22,7 @@ class APIProxy(APIView):
 
     authentication_classes = [
         SessionAuthentication,
-        TokenAuthentication,
+        JWTAuthentication,
     ]
     permission_classes = [IsAuthenticated]
 
