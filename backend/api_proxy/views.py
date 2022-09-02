@@ -56,16 +56,15 @@ class APIProxy(APIView):
                     "realname": f"{realname}",
                 }
             )
-
             logger.debug(params)
-
             resp = requests.get(
                 f"{settings.API_URL}{path}",
                 params=params,
                 timeout=180,
                 verify=False,
             )
-            logger.debug(f"{username}::{resp.url}::{resp.status_code} {params}")
+            logger.debug(
+                f"{username}::{resp.url}::{resp.status_code} {params}")
             return self.response(resp.json())
 
         except Exception as e:
@@ -77,7 +76,7 @@ class APIProxy(APIView):
     def post(self, request, *args, **kwargs):
         """Post."""
         try:
-            params = json.loads(request.body.decode("utf-8"))["params"]
+            params = request.json
             logger.debug(f"check params: {params}")
             path = self.parse_path(request)
 
@@ -87,8 +86,9 @@ class APIProxy(APIView):
 
             params.update(
                 {
-                    "username": f"{username}",
-                    "realname": f"{realname}",
+                    "username": username,
+                    "realname": realname,
+                    "displayname": displayname
                 }
             )
             for t in range(0, 5):
@@ -108,7 +108,8 @@ class APIProxy(APIView):
                     break
                 logger.error(f"function: {resp.url} retry: {t+1}/{5}")
 
-            logger.debug(f"{username}::{resp.url}::{resp.status_code} {params}")
+            logger.debug(
+                f"{username}::{resp.url}::{resp.status_code} {params}")
             return self.response(resp.json())
 
         except Exception as e:

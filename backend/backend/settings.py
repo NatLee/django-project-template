@@ -5,8 +5,8 @@ from datetime import timedelta
 import pymysql
 
 
-pymysql.version_info = (1, 4, 13, "final", 0)  ##需自行新增
-pymysql.install_as_MySQLdb()  #####
+pymysql.version_info = (1, 4, 13, "final", 0)  # 需自行新增
+pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "drf_yasg",
+    "bootstrap3",
     "custom_jwt",
     "api_proxy",
     "userprofile",
@@ -172,15 +173,18 @@ USE_L10N = True
 
 USE_TZ = True
 
+APPEND_SLASH = False
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, 'static'),
-# ]
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
-STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_URL = "static/"
+STATIC_ROOT = 'staticfiles'
+
 # MEDIA_URL = "/media/"
 # MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 

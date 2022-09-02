@@ -39,12 +39,16 @@ rm ./backend/db.sqlite3 &&  docker-compose down -v && docker-compose build && do
 rm -rf backend-sql-data &&  docker-compose down -v && docker-compose build && docker-compose up
 ```
 
-## Check
+## Link
 
 - [Admin](http://localhost/__hiddenadmin/)
 
-- [Swagger](http://localhost/__hiddenswagger/)
-
 - [Redoc](http://localhost/redoc/)
 
-- [Rest Framework](http://localhost/accounts/login/)
+- [Swagger](http://localhost/__hiddenswagger)
+
+- [Session Login with Rest Framework](http://localhost/accounts/login/)
+
+- [JWT Login](http://localhost/__user/login)
+
+- [User dashboard](http://localhost/__user/dashboard)
