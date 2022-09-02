@@ -5,12 +5,11 @@ services:
     container_name: mariadb
     platform: linux/amd64
     image: mariadb:latest
-    env_file:
-      - ./.env
     environment:
       - MYSQL_ROOT_HOST=%
       - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MARIADB_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=${MARIADB_ALLOW_EMPTY_ROOT_PASSWORD}
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     networks:
@@ -22,25 +21,14 @@ services:
     expose:
       - ${DATABASE_PORT}
 
-  redis:
-    image: daocloud.io/redis:latest
-    container_name: backend_redis
-    networks:
-      - backend_net
-    ports:
-      - 6379:6379
-
   backend:
     container_name: backend
     platform: linux/amd64
     build:
       context: .
       dockerfile: ./Dockerfile
-    env_file:
-      - ./.env
     links:
     - mariadb:mariadb
-    - redis:redis
     volumes:
       - ./backend:/app
     depends_on:
@@ -48,6 +36,8 @@ services:
     command: bash docker-entrypoint.sh
     environment:
       - DEBUG=${DEBUG}
+      - API_URL=${API_URL}
+      - API_VERSION=${API_VERSION}
       - WAIT_HOSTS=mariadb:${DATABASE_PORT}
       - WAIT_HOSTS_TIMEOUT=300
       - WAIT_SLEEP_INTERVAL=15
@@ -58,7 +48,6 @@ services:
       - DB_USER_PASSWORD=${MYSQL_PASSWORD} # db password
       - DB_PORT=${DATABASE_PORT} # db port
       - DB_HOST=mariadb # db host
-      - REDIS_HOST=redis://redis:6379 # redis host
       - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME} # superuser username
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD} # superuser password
       - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL} # superuser email

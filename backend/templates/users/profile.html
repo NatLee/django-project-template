@@ -1,0 +1,12 @@
+{% block content %}
+<h1>Profile Information</h1>
+<form method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+  <h3>
+    Username: {{ u_form.username }}<br /><br />
+    Email: {{ u_form.email }}<br /><br />
+    Displayname: {{ p_form.displayname }}<br /><br />
+    Realname: {{ p_form.realname }}
+  </h3>
+  {% endblock content %}
+</form>

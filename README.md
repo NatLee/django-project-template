@@ -2,7 +2,7 @@
 
 ## Requirements
 
-Please specify the required variables for this project.
+Please specify the required variables in `.env` for this project.
 
 ```
 DEBUG=True
@@ -17,6 +17,8 @@ DJANGO_SUPERUSER_PASSWORD=1234
 DJANGO_SUPERUSER_EMAIL=admin@admin.com
 ```
 
+If `DEBUG` is True, it'll use SQLite as database.
+
 ## Usage
 
 ```bash
@@ -25,20 +27,24 @@ docker-compose build && docker-compose up
 
 Clean up and rebuild.
 
+- Debug
+
+```bash
+rm ./backend/db.sqlite3 &&  docker-compose down -v && docker-compose build && docker-compose up
+```
+
+- Production
+
 ```bash
 rm -rf backend-sql-data &&  docker-compose down -v && docker-compose build && docker-compose up
 ```
 
 ## Check
 
-- Admin
-  http://localhost/\_\_hiddenadmin/
+- [Admin](http://localhost/__hiddenadmin/)
 
-- Swagger
-  http://localhost/\_\_hiddenswagger/
+- [Swagger](http://localhost/__hiddenswagger/)
 
-- Redoc
-  http://localhost/redoc/
+- [Redoc](http://localhost/redoc/)
 
-- Rest Framework
-  http://localhost/accounts/login/
+- [Rest Framework](http://localhost/accounts/login/)

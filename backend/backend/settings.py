@@ -1,8 +1,9 @@
 from ast import literal_eval
 import os
 from pathlib import Path
-import pymysql
 from datetime import timedelta
+import pymysql
+
 
 pymysql.version_info = (1, 4, 13, "final", 0)  ##需自行新增
 pymysql.install_as_MySQLdb()  #####
@@ -18,10 +19,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-h0usnb4^27w+^)i*)f23$i3$$)(&1m@r0cj42wsi1n@0&+7@h)"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = literal_eval(os.environ["DEBUG"])
+
+DEBUG = os.environ.get("DEBUG")
+
+if DEBUG:
+    DEBUG = literal_eval(os.environ["DEBUG"])
+else:
+    DEBUG = True
+
+API_URL = os.environ.get("API_URL")
+API_VERSION = os.environ.get("API_VERSION")
 
 ALLOWED_HOSTS = ["*"]
-AUTH_USER_MODEL = "member_system.MemberAccount"
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
@@ -47,8 +56,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "drf_yasg",
+    "custom_jwt",
+    "api_proxy",
+    "userprofile",
     "api",
-    "member_system",
 ]
 
 MIDDLEWARE = [
@@ -86,6 +97,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",  # 照順序檢查 Api 需要的 Token
         "rest_framework.authentication.SessionAuthentication",  # 後台登入
+        # "rest_framework.authentication.BasicAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",  # 必須登入才可使用
@@ -107,23 +119,25 @@ SWAGGER_SETTINGS = {
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-
-DATABASES = {
-    "default": {
-        "ENGINE": os.environ["DB_ENGINE"],
-        "NAME": os.environ["DB_NAME"],  # db name
-        "USER": os.environ["DB_USER"],  # db user
-        "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password
-        "HOST": os.environ["DB_HOST"],  # db host
-        "PORT": os.environ["DB_PORT"],  # db port
-    },
-    "OPTIONS": {"protocol": "TCP"},
-}
-
-"""
-REDIS
-"""
-REDIS_HOST = os.environ["REDIS_HOST"]
+if DEBUG:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.environ["DB_NAME"],  # db name
+            "USER": os.environ["DB_USER"],  # db user
+            "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password
+            "HOST": os.environ["DB_HOST"],  # db host
+            "PORT": os.environ["DB_PORT"],  # db port
+        },
+        "OPTIONS": {"protocol": "TCP"},
+    }
 
 
 # Password validation
@@ -161,15 +175,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-# STATIC_URL = '/static/'
-# MEDIA_URL = '/media/'
 # STATICFILES_DIRS = [
 #     os.path.join(BASE_DIR, 'static'),
 # ]
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
-
+# MEDIA_URL = "/media/"
+# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

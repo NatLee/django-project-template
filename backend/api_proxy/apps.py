@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class MemberSystemConfig(AppConfig):
+class ApiProxyConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'member_system'
+    name = 'api_proxy'
