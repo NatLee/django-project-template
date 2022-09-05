@@ -32,7 +32,6 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
 class MyTokenRefreshSerializer(TokenRefreshSerializer):
     def validate(self, attrs):
-
         data = super().validate(attrs)
         data["access_token"] = data.get("access")
         del data["access"]

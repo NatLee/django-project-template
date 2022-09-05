@@ -63,8 +63,7 @@ class APIProxy(APIView):
                 timeout=180,
                 verify=False,
             )
-            logger.debug(
-                f"{username}::{resp.url}::{resp.status_code} {params}")
+            logger.debug(f"{username}::{resp.url}::{resp.status_code} {params}")
             return self.response(resp.json())
 
         except Exception as e:
@@ -76,7 +75,8 @@ class APIProxy(APIView):
     def post(self, request, *args, **kwargs):
         """Post."""
         try:
-            params = request.json
+            params = json.loads(request.body)
+
             logger.debug(f"check params: {params}")
             path = self.parse_path(request)
 
@@ -85,31 +85,19 @@ class APIProxy(APIView):
             realname = request.user.userprofile.realname
 
             params.update(
-                {
-                    "username": username,
-                    "realname": realname,
-                    "displayname": displayname
-                }
+                {"username": username, "realname": realname, "displayname": displayname}
             )
-            for t in range(0, 5):
-                start = time.time()
-                resp = requests.post(
-                    f"{settings.API_URL}{path}",
-                    data=json.dumps(params),
-                    headers={
-                        "version": settings.API_VERSION,
-                    },
-                    verify=False,
-                )
-                # total is not ok, but do not retry request which response time is too long
-                end = time.time()
-                total_time = end - start
-                if total_time > 15:
-                    break
-                logger.error(f"function: {resp.url} retry: {t+1}/{5}")
 
-            logger.debug(
-                f"{username}::{resp.url}::{resp.status_code} {params}")
+            resp = requests.post(
+                f"{settings.API_URL}{path}",
+                data=json.dumps(params),
+                headers={
+                    "version": settings.API_VERSION,
+                },
+                verify=False,
+            )
+
+            logger.debug(f"{username}::{resp.url}::{resp.status_code} {params}")
             return self.response(resp.json())
 
         except Exception as e:
