@@ -1,6 +1,4 @@
 import json
-import traceback
-import time
 import re
 from urllib.parse import urlparse
 from loguru import logger
@@ -13,7 +11,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from rest_framework.views import APIView
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.conf import settings
 
 
@@ -26,81 +24,111 @@ class APIProxy(APIView):
     ]
     permission_classes = [IsAuthenticated]
 
+    headers = {
+        "version": settings.API_VERSION,
+    }
+
     def parse_path(self, request):
         parsed_path = urlparse(request.get_full_path())
         path = parsed_path.path.rstrip("/")
         path = re.sub("/proxy", "api", path, 1)
         return path
 
+    def get_proxy_path(self, request):
+        path = self.parse_path(request)
+        logger.debug(f"URL: {path}")
+        return f"{settings.API_URL}{path}"
+
     def response(self, resp: dict):
         return JsonResponse(resp, safe=False, json_dumps_params={"ensure_ascii": False})
+
+    def update_payload(self, request, params):
+        username = request.user.username
+        displayname = request.user.userprofile.displayname
+        realname = request.user.userprofile.realname
+        logger.debug(f"Username: {username}")
+        params.update(
+            {"username": username, "realname": realname, "displayname": displayname}
+        )
+        return params
+
+    def send_request(
+        self, method, url, params=None, data=None, json=None, timeout=180, verify=False
+    ):
+        return requests.request(
+            method=method,
+            url=url,
+            params=params,
+            data=data,
+            json=json,
+            headers=self.headers,
+            timeout=timeout,
+            verify=verify,
+        )
 
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         """Get."""
-        try:
-
+        logger.debug("----- Proxy GET")
+        response = {"status": "error"}
+        with logger.catch():
             params = dict(request.GET)
-            path = self.parse_path(request)
-
-            username = request.user.username
-            displayname = request.user.userprofile.displayname
-            realname = request.user.userprofile.realname
-
-            logger.debug(f"{username}::{displayname}::{path}")
-            params.update(
-                {
-                    "username": f"{username}",
-                    "realname": f"{realname}",
-                }
-            )
-            logger.debug(params)
-            resp = requests.get(
-                f"{settings.API_URL}{path}",
-                params=params,
-                timeout=180,
-                verify=False,
-            )
-            logger.debug(f"{username}::{resp.url}::{resp.status_code} {params}")
-            return self.response(resp.json())
-
-        except Exception as e:
-            logger.error(e)
-            logger.error(traceback.format_exc())
-
-        return self.response({"status": "error"})
+            path = self.get_proxy_path(request)
+            params = self.update_payload(request, params)
+            middle_resp_ = self.send_request("GET", path, params=params)
+            response = middle_resp_.json()
+        return self.response(response)
 
     def post(self, request, *args, **kwargs):
         """Post."""
-        try:
+        logger.debug("----- Proxy POST")
+        response = {"status": "error"}
+        with logger.catch():
             params = json.loads(request.body)
+            logger.debug(f"JSON Params: {params}")
+            path = self.get_proxy_path(request)
+            params = self.update_payload(request, params)
+            middle_resp_ = self.send_request("POST", path, json=params)
+            response = middle_resp_.json()
+        return self.response(response)
 
-            logger.debug(f"check params: {params}")
-            path = self.parse_path(request)
+    def patch(self, request, *args, **kwargs):
+        """Patch."""
+        logger.debug("----- Proxy PATCH")
+        response = {"status": "error"}
+        with logger.catch():
+            params = json.loads(request.body)
+            logger.debug(f"JSON Params: {params}")
+            path = self.get_proxy_path(request)
+            params = self.update_payload(request, params)
+            middle_resp_ = self.send_request("PATCH", path, json=params)
+            response = middle_resp_.json()
+        return self.response(response)
 
-            username = request.user.username
-            displayname = request.user.userprofile.displayname
-            realname = request.user.userprofile.realname
+    def delete(self, request, *args, **kwargs):
+        """Delete"""
+        logger.debug("----- Proxy DELETE")
+        response = {"status": "error"}
+        with logger.catch():
+            params = json.loads(request.body)
+            logger.debug(f"JSON Params: {params}")
+            path = self.get_proxy_path(request)
+            params = self.update_payload(request, params)
+            middle_resp_ = self.send_request("DELETE", path, json=params)
+            response = middle_resp_.json()
+        return self.response(response)
 
-            params.update(
-                {"username": username, "realname": realname, "displayname": displayname}
-            )
-
-            resp = requests.post(
-                f"{settings.API_URL}{path}",
-                data=json.dumps(params),
-                headers={
-                    "version": settings.API_VERSION,
-                },
-                verify=False,
-            )
-
-            logger.debug(f"{username}::{resp.url}::{resp.status_code} {params}")
-            return self.response(resp.json())
-
-        except Exception as e:
-            logger.error(e)
-            logger.error(traceback.format_exc())
-        return self.response({"status": "error"})
+    def put(self, request, *args, **kwargs):
+        """Put"""
+        logger.debug("----- Proxy PUT")
+        response = {"status": "error"}
+        with logger.catch():
+            params = json.loads(request.body)
+            logger.debug(f"JSON Params: {params}")
+            path = self.get_proxy_path(request)
+            params = self.update_payload(request, params)
+            middle_resp_ = self.send_request("PUT", path, json=params)
+            response = middle_resp_.json()
+        return self.response(response)
