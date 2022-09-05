@@ -28,10 +28,13 @@ class APIProxy(APIView):
         "version": settings.API_VERSION,
     }
 
+    route_path = "/proxy"
+    target_path = "api"
+
     def parse_path(self, request):
         parsed_path = urlparse(request.get_full_path())
         path = parsed_path.path.rstrip("/")
-        path = re.sub("/proxy", "api", path, 1)
+        path = re.sub(self.route_path, self.target_path, path, 1)
         return path
 
     def get_proxy_path(self, request):
