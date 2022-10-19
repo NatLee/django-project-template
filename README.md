@@ -4,21 +4,6 @@
 
 Please specify the required variables in `.env` for this project.
 
-```
-DEBUG=True
-MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=True
-MYSQL_ROOT_PASSWORD=""
-MYSQL_DATABASE=testdb
-MYSQL_USER=testuser
-MYSQL_PASSWORD=testpassword
-DATABASE_PORT=3306
-DJANGO_SUPERUSER_USERNAME=admin
-DJANGO_SUPERUSER_PASSWORD=1234
-DJANGO_SUPERUSER_EMAIL=admin@admin.com
-```
-
-If `DEBUG` is True, it'll use SQLite as database.
-
 ## Usage
 
 ```bash
@@ -41,14 +26,14 @@ rm -rf backend-sql-data &&  docker-compose down -v && docker-compose build && do
 
 ## Link
 
-- [Admin](http://localhost/__hiddenadmin/)
+- [Admin](http://localhost/api/__hidden_admin)
 
-- [Redoc](http://localhost/redoc/)
+- [Redoc](http://localhost/api/__hidden_redoc)
 
-- [Swagger](http://localhost/__hiddenswagger)
+- [Swagger](http://localhost/api/__hidden_swagger)
 
-- [Session Login with Rest Framework](http://localhost/accounts/login/)
+- [Session Login with Rest Framework](http://localhost/api/__hidden_dev_dashboard/login)
 
-- [JWT Login](http://localhost/__user/login)
+- [JWT Login](http://localhost/api/__hidden_dev_dashboard/login)
 
-- [User dashboard](http://localhost/__user/dashboard)
+- [User dashboard](http://localhost/api/__hidden_dev_dashboard/dashboard)

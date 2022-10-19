@@ -1,11 +1,16 @@
-{% extends "userprofile/base.html" %}
+{% extends "base.html" %}
 
-{% block title %}User Dashboard{% endblock %}
+{% block title %}Dev Dashboard{% endblock %}
 {% load static %}
 {% block content %}
     <div class="jumbotron">
-        <h1>User Dashboard</h1>
-        <p>Welcome to this dashboard.</p>
+        <h1>Dev Dashboard</h1>
+        <p>Welcome to your dashboard.</p>
+    </div>
+
+    <h2>Google Client ID</h2>
+    <div class="container">
+        {{ social_google_client_id }}
     </div>
 
     <h2>JWT Field</h2>
@@ -17,6 +22,7 @@
 
     <h2>Session Field</h2>
     <h3>---------------------------</h3>
+
     {% if request.user.is_authenticated %}
     <div class="container">
         <h3 class="text-primary">You are login as `{{ request.user }}` with this session!</h3>
@@ -29,7 +35,7 @@
 
 
 
-<script src="{% static 'userprofile/js/dashboard.js' %}"></script>
-<script src="{% static 'userprofile/js/logout.js' %}"></script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+<script src="{% static 'js/logout.js' %}"></script>
 
 {% endblock %}

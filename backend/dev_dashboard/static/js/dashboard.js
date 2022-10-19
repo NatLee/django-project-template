@@ -15,7 +15,7 @@ $.ajax({
         localStorage.setItem('jwt_token', data.access_token);
         $.ajax({
             type: "GET",
-            url: "/example_api/test?name=test",
+            url: "/api/users/me",
             headers: {
                 "Authorization": "Bearer" + " " + localStorage.getItem('jwt_token')
             },

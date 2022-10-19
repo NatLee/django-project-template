@@ -1,7 +1,6 @@
 import json
 import re
 from urllib.parse import urlparse
-from loguru import logger
 import requests
 
 # Create your views here.
@@ -14,6 +13,8 @@ from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.conf import settings
 
+import logging
+logger = logging.getLogger(__name__)
 
 class APIProxy(APIView):
     """API proxy."""
@@ -28,13 +29,13 @@ class APIProxy(APIView):
         "version": settings.API_VERSION,
     }
 
-    route_path = "/proxy"
-    target_path = "api"
+    route_path = settings.ROUTE_PATH
+    target_path = settings.TARGET_PATH
 
     def parse_path(self, request):
         parsed_path = urlparse(request.get_full_path())
         path = parsed_path.path.rstrip("/")
-        path = re.sub(self.route_path, self.target_path, path, 1)
+        path = re.sub(f'/{self.route_path}', self.target_path, path, 1)
         return path
 
     def get_proxy_path(self, request):
@@ -84,54 +85,34 @@ class APIProxy(APIView):
             response = middle_resp_.json()
         return self.response(response)
 
-    def post(self, request, *args, **kwargs):
-        """Post."""
-        logger.debug("----- Proxy POST")
+    def post_request(self, request, method):
+        logger.debug(f"----- Proxy {method}")
         response = {"status": "error"}
         with logger.catch():
             params = json.loads(request.body)
             logger.debug(f"JSON Params: {params}")
             path = self.get_proxy_path(request)
             params = self.update_payload(request, params)
-            middle_resp_ = self.send_request("POST", path, json=params)
+            middle_resp_ = self.send_request(method, path, json=params)
             response = middle_resp_.json()
+        return response
+
+    def post(self, request, *args, **kwargs):
+        """Post."""
+        response = self.post_request(request, method='POST')
         return self.response(response)
 
     def patch(self, request, *args, **kwargs):
         """Patch."""
-        logger.debug("----- Proxy PATCH")
-        response = {"status": "error"}
-        with logger.catch():
-            params = json.loads(request.body)
-            logger.debug(f"JSON Params: {params}")
-            path = self.get_proxy_path(request)
-            params = self.update_payload(request, params)
-            middle_resp_ = self.send_request("PATCH", path, json=params)
-            response = middle_resp_.json()
+        response = self.post_request(request, method='PATCH')
         return self.response(response)
 
     def delete(self, request, *args, **kwargs):
         """Delete"""
-        logger.debug("----- Proxy DELETE")
-        response = {"status": "error"}
-        with logger.catch():
-            params = json.loads(request.body)
-            logger.debug(f"JSON Params: {params}")
-            path = self.get_proxy_path(request)
-            params = self.update_payload(request, params)
-            middle_resp_ = self.send_request("DELETE", path, json=params)
-            response = middle_resp_.json()
+        response = self.post_request(request, method='DELETE')
         return self.response(response)
 
     def put(self, request, *args, **kwargs):
         """Put"""
-        logger.debug("----- Proxy PUT")
-        response = {"status": "error"}
-        with logger.catch():
-            params = json.loads(request.body)
-            logger.debug(f"JSON Params: {params}")
-            path = self.get_proxy_path(request)
-            params = self.update_payload(request, params)
-            middle_resp_ = self.send_request("PUT", path, json=params)
-            response = middle_resp_.json()
+        response = self.post_request(request, method='PUT')
         return self.response(response)

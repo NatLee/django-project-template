@@ -5,7 +5,7 @@ $("form").on("submit", function (event) {
         url: "/auth/users",
         data: $(this).serialize(),
         success: function () {
-            window.location.href = "/__user/login";
+            window.location.href = "/api/__hidden_dev_dashboard";
         },
         error: function (data) {
             console.log(data.responseText)

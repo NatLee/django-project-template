@@ -6,45 +6,72 @@ from drf_yasg import openapi
 from django.contrib.auth.decorators import login_required
 from rest_framework.permissions import AllowAny, IsAdminUser
 
-urlpatterns = [
-    re_path(r"__hiddenadmin/", admin.site.urls),
-    path("api/auth/", include("custom_jwt.urls"), name="jwt"),
-    path("__user/", include("userprofile.urls"), name="userprofile"),
-    path("proxy/", include("api_proxy.urls"), name="api_proxy"),
-    path("example_api/", include("api.urls"), name="api"),
+from rest_framework.routers import DefaultRouter
+from djoser import views as djoser_views
+
+from django.conf import settings
+
+router = DefaultRouter(trailing_slash=False)
+router.register("users", djoser_views.UserViewSet)
+
+URL_PREFIX = 'api'
+
+
+urlpatterns = []
+
+# pages
+if settings.DEBUG:
+    urlpatterns += [
+        # admin
+        path(f"{URL_PREFIX}/__hidden_admin/", admin.site.urls),
+        # debug dashboard
+        path(f"{URL_PREFIX}/__hidden_dev_dashboard", include("dev_dashboard.urls")),
+    ]
+
+
+# app route
+urlpatterns += [
+    # router
+    path(f"{URL_PREFIX}/", include(router.urls), name="api"),
+    # auth
+    path(f"{URL_PREFIX}/auth/", include("custom_jwt.urls")),
+    # proxy
+    path(f"{URL_PREFIX}/{settings.ROUTE_PATH}/", include("api_proxy.urls")),
+    # google login
+    path(f"{URL_PREFIX}/auth/google/", include("custom_auth.urls")),
 ]
 
 
-"""
-swagger
-"""
+#swagger view
 schema_view = get_schema_view(
     openapi.Info(
-        title="BACKEND API",
+        title="Backend service API",
         default_version="v1",
-        description="BACKEND API",
+        description="API of backend services.",
     ),
     public=True,
     permission_classes=(AllowAny,)
     # permission_classes = (IsAdminUser,) #is_staff才可使用
 )
 
-urlpatterns += [
-    re_path(
-        r"^__hiddenswagger(?P<format>\.json|\.yaml)$",
-        login_required(schema_view.without_ui(cache_timeout=0)),
-        name="schema-json",
-    ),
-    re_path(
-        r"^__hiddenswagger$",
-        login_required(schema_view.with_ui("swagger", cache_timeout=0)),
-        name="schema-swagger-ui",
-    ),
-    re_path(
-        r"^redoc/$",
-        login_required(schema_view.with_ui("redoc", cache_timeout=0)),
-        name="schema-redoc",
-    ),
-    re_path(r"^accounts/", include("rest_framework.urls",
-            namespace="rest_framework")),
-]
+
+# docs
+if settings.DEBUG:
+    urlpatterns += [
+        re_path(
+            r"^api/__hidden_swagger(?P<format>\.json|\.yaml)$",
+            schema_view.without_ui(cache_timeout=0),
+            name="schema-json",
+        ),
+        re_path(
+            r"^api/__hidden_swagger",
+            schema_view.with_ui("swagger", cache_timeout=0),
+            name="schema-swagger-ui",
+        ),
+        re_path(
+            r"^api/__hidden_redoc",
+            schema_view.with_ui("redoc", cache_timeout=0),
+            name="schema-redoc",
+        ),
+    ]
+

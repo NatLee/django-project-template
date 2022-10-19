@@ -1,9 +1,11 @@
+import logging
 from ast import literal_eval
 import os
 from pathlib import Path
 from datetime import timedelta
 import pymysql
 
+logger= logging.getLogger(__name__)
 
 pymysql.version_info = (1, 4, 13, "final", 0)  # 需自行新增
 pymysql.install_as_MySQLdb()
@@ -11,56 +13,71 @@ pymysql.install_as_MySQLdb()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-h0usnb4^27w+^)i*)f23$i3$$)(&1m@r0cj42wsi1n@0&+7@h)"
+SECRET_KEY = "django-insecure-h0usnb4^27w+^)i*)f24$i3$$)(&1m@r0cj42wsi1n@0&+7@h)"
 
+SITE_ID = 1
+
+# ----------------------------- START - DEBUG setting -------------------------------
 # SECURITY WARNING: don't run with debug turned on in production!
-
-DEBUG = os.environ.get("DEBUG")
-
-if DEBUG:
-    DEBUG = literal_eval(os.environ["DEBUG"])
-else:
+DEBUG = os.environ.get('DEBUG')
+if DEBUG is None:
     DEBUG = True
+else:
+    if isinstance(DEBUG, str):
+        DEBUG = literal_eval(DEBUG)
+    elif isinstance(DEBUG, bool):
+        pass
+print(f"---------- Debug mode: {DEBUG}")
+# ------------------------------ END - DEBUG setting --------------------------------
 
-API_URL = os.environ.get("API_URL")
-API_VERSION = os.environ.get("API_VERSION")
 
 ALLOWED_HOSTS = ["*"]
 
+# -------------- START - CORS Setting --------------
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_METHODS = ("*",)
-CORS_ALLOW_HEADERS = ("*",)
+CSRF_TRUSTED_ORIGINS = [
+    "http://*.127.0.0.1",
+    "http://localhost",
+]
+# -------------- END - CORS Setting -----------------
 
-
-CORS_ORIGIN_WHITELIST = (
-    "http://localhost:7777",
-    "http://localhost:3000",
+# -------------- START - Google Auth Setting --------------
+SECURE_REFERRER_POLICY = "no-referrer-when-downgrade"
+# SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+SOCIAL_GOOGLE_CLIENT_ID = (
+    "205684161131-hjh2j9o2eu0dl7e2o4tirjn71uvpp9ek.apps.googleusercontent.com"
 )
-
-CSRF_TRUSTED_ORIGINS = ["http://localhost", "http://127.0.0.1"]
+LOGIN_REDIRECT_URL = "/"
+# --------------- END - Google Auth Setting -----------------
 
 # Application definition
 
 INSTALLED_APPS = [
+    # django
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # base
     "rest_framework",
     "drf_yasg",
+    # package
     "bootstrap3",
+    "djoser",
+    "corsheaders",
+    "simple_history",
+    "author",
+    # custom
+    "dev_dashboard",
     "custom_jwt",
+    "custom_auth",
     "api_proxy",
     "userprofile",
-    "api",
 ]
 
 MIDDLEWARE = [
@@ -72,6 +89,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
+    "author.middlewares.AuthorDefaultBackendMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -94,33 +113,30 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",  # 照順序檢查 Api 需要的 Token
-        "rest_framework.authentication.SessionAuthentication",  # 後台登入
-        # "rest_framework.authentication.BasicAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",  # 必須登入才可使用
-    ),
-    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
-}
-
+# -------------- START - Swagger Setting --------------
 SWAGGER_SETTINGS = {
-    "USE_SESSION_AUTH": True,
     "SECURITY_DEFINITIONS": {
-        "ApiKey": {"type": "apiKey", "in": "header", "name": "Authorization"}
+        "Token(add prefix `Bearer` yourself)": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+        }
     },
-    "LOGIN_URL": "rest_framework:login",
-    "LOGOUT_URL": "rest_framework:logout",
-    # 'DOC_EXPANSION':'none'
+    "LOGIN_URL": "/api/__hidden_dev_dashboard/login",
+    "LOGOUT_URL": "/api/__hidden_admin/logout/?next=/api/__hidden_swagger",
 }
 
+# --------------- END - Swagger Setting----------------
 
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-if DEBUG:
+# -------------- START - Database Setting --------------
+USE_SQLITE = os.environ.get("USE_SQLITE")
+if USE_SQLITE is not None:
+    USE_SQLITE = literal_eval(USE_SQLITE)
+else:
+    USE_SQLITE = False
+
+if USE_SQLITE:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -128,17 +144,17 @@ if DEBUG:
         }
     }
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": os.environ["DB_NAME"],  # db name
-            "USER": os.environ["DB_USER"],  # db user
-            "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password
-            "HOST": os.environ["DB_HOST"],  # db host
-            "PORT": os.environ["DB_PORT"],  # db port
-        },
-        "OPTIONS": {"protocol": "TCP"},
+    SQL = {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.environ["DB_NAME"],  # db name
+        "USER": os.environ["DB_USER"],  # db user
+        "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password
+        "HOST": os.environ["DB_HOST"],  # db host
+        "PORT": os.environ["DB_PORT"],  # db port
     }
+    DATABASES = {"default": SQL, "OPTIONS": {"protocol": "TCP"}}
+# -------------- END - Database Setting --------------
+
 
 
 # Password validation
@@ -164,40 +180,104 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "Asia/Taipei"
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
-
 APPEND_SLASH = False
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-
-STATIC_URL = "static/"
-STATIC_ROOT = 'staticfiles'
-
-# MEDIA_URL = "/media/"
-# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+STATIC_URL = "api/__hidden_statics/"
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Log存取時間
-LOGS_REMOVE_DAYS = 7
+# -------------- START - Log setting --------------
+LOG_ROOT = Path(BASE_DIR) / 'logs'
+LOG_ROOT.mkdir(exist_ok=True)
 
-# Simple JWT
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        # LOG格式
+        'standard': {
+            'format': '[%(asctime)s] [%(filename)s:%(lineno)d] [%(module)s:%(funcName)s] [%(levelname)s] - %(message)s'},
+        'simple': {  # 簡單格式
+            'format': '%(levelname)s %(message)s'
+        }
+    },
+    'filters': {
+    },
+    'handlers': {
+        'file': {
+            'class': 'common.log.InterceptTimedRotatingFileHandler',
+            'filename': f"{LOG_ROOT / 'srap.log'}",
+            'when': "H",
+            'interval': 1,
+            'backupCount': 1,
+            'formatter': 'standard',
+            'encoding': 'utf-8',
+        },
+        'database': {
+            'class': 'common.log.InterceptTimedRotatingFileHandler',
+            'filename': f"{LOG_ROOT / 'database.log'}",
+            'when': "H",
+            'interval': 1,
+            'backupCount': 1,
+            'formatter': 'standard',
+            'encoding': 'utf-8',
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'propagate': True,
+            'level': "INFO"
+        },
+        'celery': {
+            'handlers': ['file'],
+            'propagate': False,
+            'level': "INFO"
+        },
+        '''
+        'django.db.backends': {
+            'handlers': ['database'],
+            'propagate': False,
+            'level': "DEBUG"
+        },
+        '''
+        'django.request': {
+            'handlers': ['file'],
+            'propagate': False,
+            'level': "DEBUG"
+        }
+    }
+}
 
+# --------------- END - Log setting ---------------
+
+
+# ---------------------------- START - REST_FRAMEWORK setting --------------------------
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        # 支援使用simplejwt的JWT登入
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # 支援一般session進行後台登入
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": (
+        # restframework的API必須登入才可使用
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    # 使用JSON來render API而非HTML界面
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+}
+# ----------------------------- END - REST_FRAMEWORK setting ----------------------------
+
+
+
+# -------------- Start - SimpleJWT Setting --------------
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=3600),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
@@ -224,3 +304,28 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
+# -------------- END - SimpleJWT Setting --------------
+
+
+# -------------- START - APIProxy Setting --------------
+API_URL = os.environ.get("API_URL")
+API_VERSION = os.environ.get("API_VERSION")
+ROUTE_PATH='proxy' # default route
+TARGET_PATH='api' # target route path
+# -------------- END - APIProxy Setting --------------
+
+
+# -------------- START - Redis Setting --------------
+# Cache time to live is 60 minutes.
+CACHE_TTL = 60 * 60
+REDIS_HOST = "redis://backend-redis:6379"
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"{REDIS_HOST}/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+# -------------- END - Redis Setting --------------

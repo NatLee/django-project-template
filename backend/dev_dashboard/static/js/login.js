@@ -7,7 +7,7 @@ $("form").on("submit", function (event) {
         success: function (data) {
             localStorage.setItem('jwt_token', data.access_token);
             localStorage.setItem('jwt_token_refresh', data.refresh_token);
-            window.location.href = "/__user/dashboard";
+            window.location.href = "/api/__hidden_dev_dashboard";
         }
     });
 });

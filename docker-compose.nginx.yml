@@ -55,6 +55,20 @@ services:
       - 8000:8000
     networks:
       - backend-service-net
+  backend-nginx:
+    container_name: "backend-nginx"
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./frontend:/src # 若前端爲build過的靜態檔案，則直接導入頁面位置
+    restart: always
+    extra_hosts: # 若前端頁面爲前端自己建立的server則必須設定這項去讓nginx可以接同一臺機器的其他port
+      - "host.docker.internal:host-gateway"
+    networks:
+      - backend-service-net
 
 networks:
   backend-service-net:
