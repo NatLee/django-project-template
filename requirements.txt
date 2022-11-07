@@ -19,3 +19,5 @@ redis==4.2.2
 pandas
 loguru
 google-auth
+
+ipython # for debugging

@@ -39,10 +39,12 @@ urlpatterns += [
     path(f"{URL_PREFIX}/{settings.ROUTE_PATH}/", include("api_proxy.urls")),
     # google login
     path(f"{URL_PREFIX}/auth/google/", include("custom_auth.urls")),
+    # ping
+    path("ping", include("ping.urls"), name="ping"),
 ]
 
 
-#swagger view
+# -------------- START - Swagger Setting --------------
 schema_view = get_schema_view(
     openapi.Info(
         title="Backend service API",
@@ -51,11 +53,9 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(AllowAny,)
-    # permission_classes = (IsAdminUser,) #is_staff才可使用
+    # permission_classes = (IsAdminUser,) # is_staff才可使用
 )
 
-
-# docs
 if settings.DEBUG:
     urlpatterns += [
         re_path(
@@ -74,4 +74,6 @@ if settings.DEBUG:
             name="schema-redoc",
         ),
     ]
+# -------------- END - Swagger Setting --------------
+
 

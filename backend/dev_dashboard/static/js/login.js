@@ -1,12 +1,30 @@
+const getObjectKeys = (obj, prefix = '') => {
+    return Object.entries(obj).reduce((collector, [key, val]) => {
+      const newKeys = [ ...collector, prefix ? `${prefix}.${key}` : key ]
+      if (Object.prototype.toString.call(val) === '[object Object]') {
+        const newPrefix = prefix ? `${prefix}.${key}` : key
+        const otherKeys = getObjectKeys(val, newPrefix)
+        return [ ...newKeys, ...otherKeys ]
+      }
+      return newKeys
+    }, [])
+  }
+
 $("form").on("submit", function (event) {
     event.preventDefault();
+
     $.ajax({
         type: "POST",
         url: "/api/auth/token",
         data: $(this).serialize(),
         success: function (data) {
-            localStorage.setItem('jwt_token', data.access_token);
-            localStorage.setItem('jwt_token_refresh', data.refresh_token);
+            const keys = getObjectKeys(data);
+            $.each(
+                keys, function (idx) {
+                    const key = keys[idx];
+                    localStorage.setItem(key, data[key]);
+                }
+            )
             window.location.href = "/api/__hidden_dev_dashboard";
         }
     });

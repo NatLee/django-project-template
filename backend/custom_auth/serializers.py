@@ -46,15 +46,19 @@ class SocialLoginSerializer(serializers.Serializer):
             if not SocialAccount.objects.filter(unique_id=idinfo["sub"]).exists():
 
                 email = idinfo["email"]
+                account, domain = email.split("@")
 
                 # check email
-                if not email.endswith("dailyview.tw"):
+                if domain not in settings.VALID_REGISTER_DOMAINS:
                     logger.warning(f"`{email}` attempts to register!!")
                     raise InvalidEmailError
 
                 first_name = idinfo["given_name"]
                 last_name = idinfo["family_name"]
-                username = f"{first_name}.{last_name}"
+                if not first_name or not last_name:
+                    username = account
+                else: 
+                    username = f"{first_name}.{last_name}"
                 user = User.objects.create_user(
                     # Username has to be unique
                     username=username,

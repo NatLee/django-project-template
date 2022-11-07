@@ -73,18 +73,27 @@
             url: "/api/auth/google/token",
             data: { credential: credential }
         }).done(function (data) {
-            localStorage.setItem('jwt_token', data.access_token);
-            localStorage.setItem('jwt_token_refresh', data.refresh_token);
+            const access_token = data.access_token;
+            const refresh_token = data.refresh_token;
+            localStorage.setItem('access_token', access_token);
+            localStorage.setItem('refresh_token', refresh_token);
             $.ajax({
-                type: "GET",
-                url: "/api/users/me",
+                type: "POST",
+                url: "/api/auth/token/verify",
+                data: {"token":access_token},
                 headers: {
-                    "Authorization": "Bearer" + " " + localStorage.getItem('jwt_token')
+                    "Authorization": "Bearer" + " " + access_token
                 },
                 success: function (data) {
                     var json_string = JSON.stringify(data, null, 2);
                     console.log(data);
-                    $('#result').append('<br>!! Use 3rd party login !!').css('color', 'green').css('white-space', 'pre-line');
+                    $('#token').text('Bearer ' + access_token);
+                    $('#token').css('color', 'green');
+                    $('#result').text('3rd party login!');
+                    if(json_string){
+                        $('#result').append(" Token verified successfully!");
+                    }
+                    $('#result').css('color', 'blue').css('white-space', 'pre-line');
                 },
                 error: function (data) {
                     var result = "please login " + data.responseText;

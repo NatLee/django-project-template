@@ -7,11 +7,15 @@ import pymysql
 
 logger= logging.getLogger(__name__)
 
+print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
+
 pymysql.version_info = (1, 4, 13, "final", 0)  # 需自行新增
 pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+print(f"---------- Project DIR: {BASE_DIR}")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-h0usnb4^27w+^)i*)f24$i3$$)(&1m@r0cj42wsi1n@0&+7@h)"
@@ -48,9 +52,10 @@ SECURE_REFERRER_POLICY = "no-referrer-when-downgrade"
 # SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 SOCIAL_GOOGLE_CLIENT_ID = (
-    "205684161131-hjh2j9o2eu0dl7e2o4tirjn71uvpp9ek.apps.googleusercontent.com"
+    "376808175534-d6mefo6b1kqih3grjjose2euree2g3cs.apps.googleusercontent.com"
 )
 LOGIN_REDIRECT_URL = "/"
+VALID_REGISTER_DOMAINS = ["gmail.com"]
 # --------------- END - Google Auth Setting -----------------
 
 # Application definition
@@ -78,6 +83,8 @@ INSTALLED_APPS = [
     "custom_auth",
     "api_proxy",
     "userprofile",
+    # test
+    "ping"
 ]
 
 MIDDLEWARE = [
@@ -135,24 +142,32 @@ if USE_SQLITE is not None:
     USE_SQLITE = literal_eval(USE_SQLITE)
 else:
     USE_SQLITE = False
-
+print(f"---------- Use SQLite: {USE_SQLITE}")
 if USE_SQLITE:
+    SQLITE_DIR = BASE_DIR / "db.sqlite3"
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": SQLITE_DIR,
         }
     }
+    print(f"---------- SQLITE DIR: {SQLITE_DIR}")
 else:
+    DB_NAME = os.environ["DB_NAME"]
+    DB_USER = os.environ["DB_USER"]
+    #DB_USER_PASSWORD = os.environ["DB_USER_PASSWORD"] # for security reasons
+    DB_HOST = os.environ["DB_HOST"]
+    DB_PORT = os.environ["DB_PORT"]
     SQL = {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ["DB_NAME"],  # db name
-        "USER": os.environ["DB_USER"],  # db user
+        "NAME": DB_NAME,  # db name
+        "USER": DB_USER,  # db user
         "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password
-        "HOST": os.environ["DB_HOST"],  # db host
-        "PORT": os.environ["DB_PORT"],  # db port
+        "HOST": DB_HOST,  # db host
+        "PORT": DB_PORT,  # db port
     }
     DATABASES = {"default": SQL, "OPTIONS": {"protocol": "TCP"}}
+    print(f"---------- MYSQL: {DB_NAME} -> {DB_USER}@{DB_HOST}:{DB_PORT}")
 # -------------- END - Database Setting --------------
 
 
@@ -312,20 +327,49 @@ API_URL = os.environ.get("API_URL")
 API_VERSION = os.environ.get("API_VERSION")
 ROUTE_PATH='proxy' # default route
 TARGET_PATH='api' # target route path
+print(f"---------- API Proxy: {TARGET_PATH} -> {ROUTE_PATH}")
 # -------------- END - APIProxy Setting --------------
 
 
 # -------------- START - Redis Setting --------------
-# Cache time to live is 60 minutes.
-CACHE_TTL = 60 * 60
-REDIS_HOST = "redis://backend-redis:6379"
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"{REDIS_HOST}/0",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+
+REDIS = os.environ.get("REDIS")
+if REDIS is not None:
+    REDIS = literal_eval(REDIS)
+else:
+    REDIS = False
+
+if REDIS:
+    REDIS_PORT = 6379
+    REDIS_HOST = "redis://backend-redis"
+    CACHES = { # Redis cache
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"{REDIS_HOST}:{REDIS_PORT}/0",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
         }
     }
-}
+print(f"---------- REDIS mode: {REDIS}")
+
 # -------------- END - Redis Setting --------------
+
+# -------------- START - Cache Setting --------------
+CACHE = os.environ.get("CACHE")
+if CACHE is not None:
+    CACHE = literal_eval(CACHE)
+else:
+    CACHE = False
+
+print(f"---------- CACHE mode: {CACHE}")
+
+if CACHE:
+    # Cache time to live is 60 minutes.
+    CACHE_TTL = 60 * 60
+    print(f"---------- CACHE TTL: {CACHE_TTL} sec(s)")
+# -------------- END - Cache Setting --------------
+
+print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
+
+
