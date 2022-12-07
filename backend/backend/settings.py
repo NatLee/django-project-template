@@ -332,44 +332,26 @@ print(f"---------- API Proxy: {TARGET_PATH} -> {ROUTE_PATH}")
 
 
 # -------------- START - Redis Setting --------------
-
-REDIS = os.environ.get("REDIS")
-if REDIS is not None:
-    REDIS = literal_eval(REDIS)
-else:
-    REDIS = False
-
-if REDIS:
-    REDIS_PORT = 6379
-    REDIS_HOST = "redis://backend-redis"
-    CACHES = { # Redis cache
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": f"{REDIS_HOST}:{REDIS_PORT}/0",
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            },
-        }
+REDIS_PORT = 6379
+REDIS_HOST = "redis://backend-redis"
+CACHES = { # Redis cache
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"{REDIS_HOST}:{REDIS_PORT}/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
     }
-print(f"---------- REDIS mode: {REDIS}")
+}
+print(f"---------- REDIS: {REDIS_HOST}:{REDIS_PORT}")
 
 # -------------- END - Redis Setting --------------
 
-# -------------- START - Cache Setting --------------
-CACHE = os.environ.get("CACHE")
-if CACHE is not None:
-    CACHE = literal_eval(CACHE)
-else:
-    CACHE = False
-
-print(f"---------- CACHE mode: {CACHE}")
-
-if CACHE:
-    # Cache time to live is 60 minutes.
-    CACHE_TTL = 60 * 60
-    print(f"---------- CACHE TTL: {CACHE_TTL} sec(s)")
-# -------------- END - Cache Setting --------------
+# -------------- START - Cache Page Setting --------------
+CACHE_PATG = False
+CACHE_TTL = 60 * 60
+print(f"---------- CACHE PAGE: {CACHE_PATG}")
+print(f"---------- CACHE TTL: {CACHE_TTL} sec(s)")
+# -------------- END - Cache Page Setting --------------
 
 print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
-
-

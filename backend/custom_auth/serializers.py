@@ -55,10 +55,8 @@ class SocialLoginSerializer(serializers.Serializer):
 
                 first_name = idinfo["given_name"]
                 last_name = idinfo["family_name"]
-                if not first_name or not last_name:
-                    username = account
-                else: 
-                    username = f"{first_name}.{last_name}"
+
+                username = account
                 user = User.objects.create_user(
                     # Username has to be unique
                     username=username,

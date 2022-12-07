@@ -7,7 +7,7 @@ class CacheDeco:
     def __init__(self):
         pass
     def __call__(self, func):
-        if settings.CACHE:
+        if settings.CACHE_PATG:
             @method_decorator(cache_page(settings.CACHE_TTL))
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)

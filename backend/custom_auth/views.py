@@ -1,3 +1,4 @@
+from django.contrib.auth import login
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -20,6 +21,8 @@ def get_tokens_for_user(user):
     }
 
 
+
+
 class GoogleLogin(MyTokenObtainPairView):
     permission_classes = (AllowAny,)  # AllowAny for login
     serializer_class = SocialLoginSerializer
@@ -29,6 +32,7 @@ class GoogleLogin(MyTokenObtainPairView):
         if serializer.is_valid(raise_exception=True):
             try:
                 user = serializer.save()
+                #login(user=user, request=request) # 順便幫使用者做session的登入
                 return Response(get_tokens_for_user(user))
             except InvalidEmailError:
                 return Response(
