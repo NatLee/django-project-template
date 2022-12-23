@@ -61,6 +61,8 @@ VALID_REGISTER_DOMAINS = ["gmail.com"]
 # Application definition
 
 INSTALLED_APPS = [
+    # admin UI
+    "simpleui",
     # django
     "django.contrib.admin",
     "django.contrib.auth",

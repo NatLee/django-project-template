@@ -9,6 +9,8 @@ django-simple-history
 django-author
 djoser
 
+django-simpleui
+
 drf-yasg==1.21.4
 PyMySQL==1.0.2
 

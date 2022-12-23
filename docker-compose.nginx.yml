@@ -52,7 +52,7 @@ services:
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
     ports:
-      - 8000:8000
+      - ${HOST_PORT}:8000
     networks:
       - backend-service-net
   backend-nginx:
