@@ -123,6 +123,9 @@ TEMPLATES = [
 WSGI_APPLICATION = "backend.wsgi.application"
 
 # -------------- START - Swagger Setting --------------
+
+USE_X_FORWARDED_HOST = True
+
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
         "Token(add prefix `Bearer` yourself)": {
@@ -213,6 +216,24 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOG_ROOT = Path(BASE_DIR) / 'logs'
 LOG_ROOT.mkdir(exist_ok=True)
 
+LOG_TYPES = ['file', 'database']
+for log_type in LOG_TYPES:
+    log_type_path = Path(BASE_DIR) / 'logs' / log_type
+    log_type_path.mkdir(exist_ok=True)
+
+HANDLERS = {}
+
+for log_type in LOG_TYPES:
+    HANDLERS[log_type] = {
+        'class': 'common.log.InterceptTimedRotatingFileHandler',
+        'filename': f"{LOG_ROOT / log_type/ f'{log_type}.log'}",
+        'when': "H",
+        'interval': 1,
+        'backupCount': 1,
+        'formatter': 'standard',
+        'encoding': 'utf-8',
+    }
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -226,26 +247,7 @@ LOGGING = {
     },
     'filters': {
     },
-    'handlers': {
-        'file': {
-            'class': 'common.log.InterceptTimedRotatingFileHandler',
-            'filename': f"{LOG_ROOT / 'srap.log'}",
-            'when': "H",
-            'interval': 1,
-            'backupCount': 1,
-            'formatter': 'standard',
-            'encoding': 'utf-8',
-        },
-        'database': {
-            'class': 'common.log.InterceptTimedRotatingFileHandler',
-            'filename': f"{LOG_ROOT / 'database.log'}",
-            'when': "H",
-            'interval': 1,
-            'backupCount': 1,
-            'formatter': 'standard',
-            'encoding': 'utf-8',
-        }
-    },
+    'handlers': HANDLERS,
     'loggers': {
         'django': {
             'handlers': ['file'],
@@ -257,13 +259,11 @@ LOGGING = {
             'propagate': False,
             'level': "INFO"
         },
-        '''
         'django.db.backends': {
             'handlers': ['database'],
             'propagate': False,
             'level': "DEBUG"
         },
-        '''
         'django.request': {
             'handlers': ['file'],
             'propagate': False,
