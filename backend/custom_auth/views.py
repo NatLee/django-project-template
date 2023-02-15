@@ -32,16 +32,16 @@ class GoogleLogin(MyTokenObtainPairView):
         if serializer.is_valid(raise_exception=True):
             try:
                 user = serializer.save()
-                #login(user=user, request=request) # 順便幫使用者做session的登入
+                login(user=user, request=request) # 順便幫使用者做session的登入
                 return Response(get_tokens_for_user(user))
             except InvalidEmailError:
                 return Response(
-                    {"status": "error", "detail": "This email is invaild."}, status=401
+                    {"status": "error", "detail": "This email is invalid."}, status=401
                 )
-            except ValueError as e:
-                logger.error(e)
+            except ValueError as exception:
+                logger.error(exception)
                 return Response(
-                    {"status": "error", "detail": "Something wnet wrong :("}, status=500
+                    {"status": "error", "detail": "Something went wrong :("}, status=500
                 )
         else:
             return Response(
