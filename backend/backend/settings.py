@@ -350,9 +350,9 @@ print(f"---------- REDIS: {REDIS_HOST}:{REDIS_PORT}")
 # -------------- END - Redis Setting --------------
 
 # -------------- START - Cache Page Setting --------------
-CACHE_PATG = False
+CACHE_PAGE = False
 CACHE_TTL = 60 * 60
-print(f"---------- CACHE PAGE: {CACHE_PATG}")
+print(f"---------- CACHE PAGE: {CACHE_PAGE}")
 print(f"---------- CACHE TTL: {CACHE_TTL} sec(s)")
 # -------------- END - Cache Page Setting --------------
 
