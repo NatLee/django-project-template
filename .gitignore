@@ -6,7 +6,7 @@ backend-sql-data/
 .DS_Store
 desktop.ini
 *_initial.py
-
+backend/staticfiles
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -91,6 +91,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -208,6 +209,7 @@ APPEND_SLASH = False
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "api/__hidden_statics/"
+STATIC_ROOT = "staticfiles"
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
