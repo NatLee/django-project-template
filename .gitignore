@@ -1,12 +1,15 @@
 
 # My custom ignore list
+
 log
 logs
 backend-sql-data/
 .DS_Store
 desktop.ini
-*_initial.py
+00*_*.py
 backend/staticfiles
+*.pid
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -60,16 +60,17 @@ bash dev-startapp <YOUR_NEW_APP_NAME>
 
 ## Link
 
-> Here's port `3000` is an example. You can define it in `.env` file.
+> Here's port `5566` is an example. You can define it in `.env` file.
 
-- Admin: http://localhost:3000/api/__hidden_admin/
+- Admin: http://localhost:5566/api/__hidden_admin/
 
-- Redoc: http://localhost:3000/api/__hidden_redoc
+- Redoc: http://localhost:5566/api/__hidden_redoc
 
-- Swagger: http://localhost:3000/api/__hidden_swagger
+- Swagger: http://localhost:5566/api/__hidden_swagger
 
-- Session Login with Rest Framework: http://localhost:3000/api/__hidden_dev_dashboard/login
+- Session Login with Rest Framework: http://localhost:5566/api/__hidden_dev_dashboard/login
 
-- JWT Login: http://localhost:3000/api/__hidden_dev_dashboard/login
+- JWT Login: http://localhost:5566/api/__hidden_dev_dashboard/login
 
-- DEV dashboard: http://localhost:3000/api/__hidden_dev_dashboard
+- DEV dashboard: http://localhost:5566/api/__hidden_dev_dashboard
+

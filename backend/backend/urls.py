@@ -28,6 +28,8 @@ if settings.DEBUG:
         path(f"{URL_PREFIX}/__hidden_admin/", admin.site.urls),
         # debug dashboard
         path(f"{URL_PREFIX}/__hidden_dev_dashboard", include("dev_dashboard.urls")),
+        # django-rq
+        path(f'{URL_PREFIX}/__hidden_django_rq', include('django_rq.urls'))
     ]
 
 

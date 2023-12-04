@@ -34,6 +34,7 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - ./backend:/app
+      - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:rw
     depends_on:
       - backend-mariadb
     command: bash docker-entrypoint.sh

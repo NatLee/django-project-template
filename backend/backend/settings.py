@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "simple_history",
     "author",
+    "django_rq",
     # custom
     "dev_dashboard",
     "custom_jwt",
@@ -350,6 +351,16 @@ CACHES = { # Redis cache
 print(f"---------- REDIS: {REDIS_HOST}:{REDIS_PORT}")
 
 # -------------- END - Redis Setting --------------
+
+# -------------- Start - RQ --------------
+RQ_QUEUES = {
+    'default': {
+        'URL': f'{REDIS_HOST}:{REDIS_PORT}/1',
+        'DEFAULT_TIMEOUT': 500,
+        'USE_REDIS_CACHE': 'default',
+    },
+}
+# -------------- END - RQ --------------
 
 # -------------- START - Cache Page Setting --------------
 CACHE_PAGE = False
