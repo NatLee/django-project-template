@@ -60,14 +60,16 @@ bash dev-startapp <YOUR_NEW_APP_NAME>
 
 ## Link
 
-- [Admin](http://localhost/api/__hidden_admin)
+> Here's port `3000` is an example. You can define it in `.env` file.
 
-- [Redoc](http://localhost/api/__hidden_redoc)
+- Admin: http://localhost:3000/api/__hidden_admin/
 
-- [Swagger](http://localhost/api/__hidden_swagger)
+- Redoc: http://localhost:3000/api/__hidden_redoc
 
-- [Session Login with Rest Framework](http://localhost/api/__hidden_dev_dashboard/login)
+- Swagger: http://localhost:3000/api/__hidden_swagger
 
-- [JWT Login](http://localhost/api/__hidden_dev_dashboard/login)
+- Session Login with Rest Framework: http://localhost:3000/api/__hidden_dev_dashboard/login
 
-- [DEV dashboard](http://localhost/api/__hidden_dev_dashboard/dashboard)
+- JWT Login: http://localhost:3000/api/__hidden_dev_dashboard/login
+
+- DEV dashboard: http://localhost:3000/api/__hidden_dev_dashboard
