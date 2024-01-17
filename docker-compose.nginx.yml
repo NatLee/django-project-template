@@ -1,34 +1,45 @@
 version: "3.9"
 
+x-common-networks:
+  &networks
+  networks:
+    - backend-service-net
+
+x-common-restart:
+  &restart
+  restart: always
+
 services:
   backend-mariadb:
+    <<: [ *restart, *networks ]
     container_name: backend-mariadb
     platform: linux/amd64
     image: mariadb:latest
-    restart: always
     environment:
       - MYSQL_ROOT_HOST=%
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_USER_PASSWORD}
       - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true
-    # command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0
+    command: 
+      - --net_buffer_length=1048576
+      - --max_allowed_packet=1073741824
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-flush-log-at-trx-commit=0
+      #- --init_connect='SET NAMES utf8mb4;'
     volumes:
       - ./backend-sql-data:/var/lib/mysql
-    networks:
-      - backend-service-net
 
   backend-redis:
-      image: redis
-      container_name: backend-redis
-      restart: always
-      networks:
-        - backend-service-net
+    <<: [ *restart, *networks ]
+    image: redis
+    container_name: backend-redis
 
   backend-api-service:
+    <<: [ *restart, *networks ]
     container_name: backend-api-service
     platform: linux/amd64
-    restart: always
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -54,9 +65,9 @@ services:
       - DB_PORT=${DB_PORT}
     ports:
       - ${HOST_PORT}:8000
-    networks:
-      - backend-service-net
+
   backend-nginx:
+    <<: [ *restart, *networks ]
     container_name: "backend-nginx"
     image: nginx:latest
     ports:
@@ -65,11 +76,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./frontend:/src # 若前端爲build過的靜態檔案，則直接導入頁面位置
-    restart: always
     extra_hosts: # 若前端頁面爲前端自己建立的server則必須設定這項去讓nginx可以接同一臺機器的其他port
       - "host.docker.internal:host-gateway"
-    networks:
-      - backend-service-net
 
 networks:
   backend-service-net:
