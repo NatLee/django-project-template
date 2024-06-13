@@ -1,2 +1,3 @@
 #!/bin/bash
-docker exec -it backend-api-service bash
+export $(grep -v '^#' .env | xargs)
+docker exec -it $PROJECT_NAME-api bash
