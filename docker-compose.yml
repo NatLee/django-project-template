@@ -1,9 +1,8 @@
-version: "3.9"
 
 x-common-networks:
   &networks
   networks:
-    - backend-service-net
+    - net
 
 x-common-restart:
   &restart
@@ -12,7 +11,7 @@ x-common-restart:
 services:
   backend-mariadb:
     <<: [ *restart, *networks ]
-    container_name: backend-mariadb
+    container_name: ${PROJECT_NAME}-mariadb
     platform: linux/amd64
     image: mariadb:latest
     environment:
@@ -32,15 +31,17 @@ services:
       - ./backend-sql-data:/var/lib/mysql
 
   backend-redis:
-      <<: [ *restart, *networks ]
-      image: redis
-      container_name: backend-redis
-
-  backend-api-service:
     <<: [ *restart, *networks ]
-    container_name: backend-api-service
-    platform: linux/amd64
+    image: redis
+    container_name: ${PROJECT_NAME}-redis
+    hostname: ${PROJECT_NAME}-redis
 
+  backend-api:
+    <<: [ *restart, *networks ]
+    container_name: ${PROJECT_NAME}-api
+    hostname: ${PROJECT_NAME}-api
+    image: ${PROJECT_NAME}-backend:latest
+    platform: linux/amd64
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -58,7 +59,6 @@ services:
       - WAIT_HOSTS_TIMEOUT=300
       - WAIT_SLEEP_INTERVAL=15
       - WAIT_HOST_CONNECT_TIMEOUT=20
-      - USE_SQLITE=${USE_SQLITE}
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_USER_PASSWORD=${DB_USER_PASSWORD}
@@ -67,6 +67,21 @@ services:
     ports:
       - ${HOST_PORT}:8000
 
+  backend-nginx:
+    <<: [ *restart, *networks ]
+    container_name: ${PROJECT_NAME}-nginx
+    image: nginx:latest
+    hostname: ${PROJECT_NAME}-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./frontend:/src # 若前端爲build過的靜態檔案，則直接導入頁面位置
+    extra_hosts: # 若前端頁面爲前端自己建立的server則必須設定這項去讓nginx可以接同一臺機器的其他port
+      - "host.docker.internal:host-gateway"
+
 networks:
-  backend-service-net:
+  net:
+    name: ${PROJECT_NAME}-net
     driver: bridge
