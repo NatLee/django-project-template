@@ -13,6 +13,8 @@ djoser
 
 django-simpleui
 
+django-simple-third-party-jwt==0.2.1
+
 drf-yasg==1.21.4
 PyMySQL==1.0.2
 

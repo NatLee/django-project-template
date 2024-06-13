@@ -47,16 +47,26 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 # -------------- END - CORS Setting -----------------
 
-# -------------- START - Google Auth Setting --------------
+# -------------- START - Auth Setting --------------
+
 SECURE_REFERRER_POLICY = "no-referrer-when-downgrade"
 # SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
-SOCIAL_GOOGLE_CLIENT_ID = (
-    "376808175534-d6mefo6b1kqih3grjjose2euree2g3cs.apps.googleusercontent.com"
-)
+
 LOGIN_REDIRECT_URL = "/"
-VALID_REGISTER_DOMAINS = ["gmail.com"]
-# --------------- END - Google Auth Setting -----------------
+VALID_REGISTER_DOMAINS = ["gmail.com", "hotmail.com"] # Only these domains can login.
+
+# API URL Prefix
+JWT_3RD_PREFIX = 'api'
+
+# ================== Google Auth ==================
+# Add this block if you want to login with Google.
+
+SOCIAL_GOOGLE_CLIENT_ID = "376808175534-d6mefo6b1kqih3grjjose2euree2g3cs.apps.googleusercontent.com"
+
+# ================== END - Google Auth ==================
+
+# --------------- END - Auth Setting -----------------
 
 # Application definition
 
@@ -80,10 +90,10 @@ INSTALLED_APPS = [
     "simple_history",
     "author",
     "django_rq",
+    "django_simple_third_party_jwt", # https://github.com/NatLee/Django-Simple-3rd-Party-JWT
     # custom
     "dev_dashboard",
     "custom_jwt",
-    "custom_auth",
     "api_proxy",
     "userprofile",
     # test

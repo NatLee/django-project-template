@@ -32,18 +32,22 @@ if settings.DEBUG:
         path(f'{URL_PREFIX}/__hidden_django_rq', include('django_rq.urls'))
     ]
 
-
-# app route
+# Auth
 urlpatterns += [
-    # router
-    path(f"{URL_PREFIX}/", include(router.urls), name="api"),
+    # 3rd party jwt
+    path(f"{settings.JWT_3RD_PREFIX}/", include("django_simple_third_party_jwt.urls")),
     # auth
     path(f"{URL_PREFIX}/auth/", include("custom_jwt.urls")),
+]
+
+
+# Custom APP route
+urlpatterns += [
+    # index
+    path(f"{URL_PREFIX}/", include(router.urls), name="api"),
     # proxy
     path(f"{URL_PREFIX}/{settings.ROUTE_PATH}/", include("api_proxy.urls")),
-    # google login
-    path(f"{URL_PREFIX}/auth/google/", include("custom_auth.urls")),
-    # ping
+    # example - ping
     path("ping", include("ping.urls"), name="ping"),
 ]
 

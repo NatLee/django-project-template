@@ -6,33 +6,23 @@ This is a template that can be used creating a Django project.
 
 Please specify the required variables in `.env` for this project.
 
+## Features
+
+- Backend -> Django
+- Database -> MariaDB
+- Load Balancer -> NGINX
+
 ## Usage
 
 ### Quick Start
-
-- Only Django backend
 
 ```bash
 docker-compose build && docker-compose up
 ```
 
-- Nginx support
-
-```bash
-docker-compose -f docker-compose.nginx.yml build && docker-compose -f docker-compose.nginx.yml up
-```
-
 ### Rebuild
 
 Clean up and rebuild.
-
-- SQLite
-
-```bash
-rm ./backend/db.sqlite3 &&  docker-compose down -v && docker-compose build && docker-compose up
-```
-
-- MySQL
 
 ```bash
 rm -rf backend-sql-data &&  docker-compose down -v && docker-compose build && docker-compose up
