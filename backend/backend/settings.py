@@ -144,37 +144,21 @@ SWAGGER_SETTINGS = {
 
 
 # -------------- START - Database Setting --------------
-USE_SQLITE = os.environ.get("USE_SQLITE")
-if USE_SQLITE is not None:
-    USE_SQLITE = literal_eval(USE_SQLITE)
-else:
-    USE_SQLITE = False
-print(f"---------- Use SQLite: {USE_SQLITE}")
-if USE_SQLITE:
-    SQLITE_DIR = BASE_DIR / "db.sqlite3"
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": SQLITE_DIR,
-        }
-    }
-    print(f"---------- SQLITE DIR: {SQLITE_DIR}")
-else:
-    DB_NAME = os.environ["DB_NAME"]
-    DB_USER = os.environ["DB_USER"]
-    #DB_USER_PASSWORD = os.environ["DB_USER_PASSWORD"] # for security reasons
-    DB_HOST = os.environ["DB_HOST"]
-    DB_PORT = os.environ["DB_PORT"]
-    SQL = {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": DB_NAME,  # db name
-        "USER": DB_USER,  # db user
-        "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password
-        "HOST": DB_HOST,  # db host
-        "PORT": DB_PORT,  # db port
-    }
-    DATABASES = {"default": SQL, "OPTIONS": {"protocol": "TCP"}}
-    print(f"---------- MYSQL: {DB_NAME} -> {DB_USER}@{DB_HOST}:{DB_PORT}")
+DB_NAME = os.environ["DB_NAME"]
+DB_USER = os.environ["DB_USER"]
+#DB_USER_PASSWORD = os.environ["DB_USER_PASSWORD"] # for security reasons
+DB_HOST = os.environ["DB_HOST"]
+DB_PORT = os.environ["DB_PORT"]
+SQL = {
+    "ENGINE": "django.db.backends.mysql",
+    "NAME": DB_NAME,  # db name
+    "USER": DB_USER,  # db user
+    "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password
+    "HOST": DB_HOST,  # db host
+    "PORT": DB_PORT,  # db port
+}
+DATABASES = {"default": SQL, "OPTIONS": {"protocol": "TCP"}}
+print(f"---------- MYSQL: {DB_NAME} -> {DB_USER}@{DB_HOST}:{DB_PORT}")
 # -------------- END - Database Setting --------------
 
 
@@ -258,11 +242,6 @@ LOGGING = {
         'django': {
             'handlers': ['file'],
             'propagate': True,
-            'level': "INFO"
-        },
-        'celery': {
-            'handlers': ['file'],
-            'propagate': False,
             'level': "INFO"
         },
         'django.db.backends': {
