@@ -12,7 +12,6 @@ django-cors-headers==3.11.0
 django-bootstrap3==21.2
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
-django-redis==5.4.0
 django-simple-history==3.7.0
 django-author==1.2.0
 djoser==2.2.3
@@ -21,6 +20,9 @@ django-simple-third-party-jwt==0.2.1
 
 # Static files
 whitenoise==6.5.0
+
+# Redis
+django-redis==5.4.0
 
 # Admin panel customization
 django-import-export==4.1.1
@@ -33,16 +35,19 @@ drf-yasg==1.21.4
 PyMySQL==1.0.2
 
 pyparsing==3.0.8
-redis==4.2.2
 
 pandas
 loguru
 google-auth
 
 # Task scheduler
-django-rq==2.10.2
-rq==1.16.2
+django-q2
 
 # Debug
 ipython
 ipdb
+
+# Websocket
+channels==4.0.0
+channels_redis==4.1.0
+daphne==4.0.0
