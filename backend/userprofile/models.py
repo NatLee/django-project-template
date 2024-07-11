@@ -14,3 +14,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} Profile"
+
+    class Meta:
+        verbose_name = '使用者資料（User Profile）'
+        verbose_name_plural = '使用者資料（User Profiles）'
