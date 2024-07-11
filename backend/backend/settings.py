@@ -71,8 +71,14 @@ SOCIAL_GOOGLE_CLIENT_ID = "376808175534-d6mefo6b1kqih3grjjose2euree2g3cs.apps.go
 # Application definition
 
 INSTALLED_APPS = [
-    # admin UI
-    "simpleui",
+    # admin skin
+    "unfold",  # before django.contrib.admin
+    "unfold.contrib.filters",  # optional, if special filters are needed
+    "unfold.contrib.forms",  # optional, if special form elements are needed
+    "unfold.contrib.inlines",  # optional, if special inlines are needed
+    "unfold.contrib.import_export",  # optional, if django-import-export package is used
+    #"unfold.contrib.guardian",  # optional, if django-guardian package is used
+    "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
     # django
     "django.contrib.admin",
     "django.contrib.auth",
@@ -99,6 +105,16 @@ INSTALLED_APPS = [
     # test
     "ping"
 ]
+
+UNFOLD = {
+    "SITE_TITLE": "後端管理平台",
+    "SITE_HEADER": "後端管理平台",
+    # "THEME": "light", # Force theme: "dark" or "light". Will disable theme switcher
+    "SIDEBAR": {
+        "show_search": True,  # Search in applications and models names
+        "show_all_applications": True,  # Dropdown with all applications and models
+    }
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -216,35 +232,46 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOG_ROOT = Path(BASE_DIR) / 'logs'
 LOG_ROOT.mkdir(exist_ok=True)
 
-LOG_TYPES = ['file', 'database']
-for log_type in LOG_TYPES:
+LOG_TYPES = {
+    'file': 'standard',
+    'database': 'standard',
+    'api': 'api-format',
+    'auth': 'standard',
+}
+
+FORMATTERS = {
+    'standard': {
+        'format': '[%(asctime)s] [%(filename)s:%(lineno)d] [%(module)s:%(funcName)s] [%(levelname)s] - %(message)s'
+    },
+    "simple": {
+        "format": "%(levelname)s %(message)s"
+    },
+    "api-format": {
+        "format": "[%(asctime)s] [%(funcName)s:%(lineno)d] [%(levelname)s] - %(message)s"
+    },
+}
+
+for log_type in LOG_TYPES.keys():
     log_type_path = Path(BASE_DIR) / 'logs' / log_type
     log_type_path.mkdir(exist_ok=True)
 
 HANDLERS = {}
 
-for log_type in LOG_TYPES:
+for log_type, formatter in LOG_TYPES.items():
     HANDLERS[log_type] = {
         'class': 'common.log.InterceptTimedRotatingFileHandler',
-        'filename': f"{LOG_ROOT / log_type/ f'{log_type}.log'}",
+        'filename': f"{LOG_ROOT / log_type / f'{log_type}.log'}",
         'when': "H",
         'interval': 1,
         'backupCount': 1,
-        'formatter': 'standard',
+        'formatter': formatter,
         'encoding': 'utf-8',
     }
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
-    'formatters': {
-        # LOG格式
-        'standard': {
-            'format': '[%(asctime)s] [%(filename)s:%(lineno)d] [%(module)s:%(funcName)s] [%(levelname)s] - %(message)s'},
-        'simple': {  # 簡單格式
-            'format': '%(levelname)s %(message)s'
-        }
-    },
+    'formatters': FORMATTERS,
     'filters': {
     },
     'handlers': HANDLERS,
@@ -254,18 +281,32 @@ LOGGING = {
             'propagate': True,
             'level': "INFO"
         },
+        '''
         'django.db.backends': {
             'handlers': ['database'],
             'propagate': False,
-            'level': "DEBUG"
+            'level': "INFO"
         },
+        '''
         'django.request': {
             'handlers': ['file'],
             'propagate': False,
             'level': "DEBUG"
-        }
+        },
+        "custom_auth": {
+            "handlers": ["auth"],
+            "propagate": False,
+            "level": "DEBUG"
+        },
+        # JWT相關
+        "custom_jwt": {
+            "handlers": ["auth"],
+            "propagate": False,
+            "level": "DEBUG"
+        },
     }
 }
+
 
 # --------------- END - Log setting ---------------
 
