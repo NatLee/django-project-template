@@ -64,8 +64,6 @@ services:
       - DB_USER_PASSWORD=${DB_USER_PASSWORD}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
-    ports:
-      - ${HOST_PORT}:8000
 
   backend-nginx:
     <<: [ *restart, *networks ]
@@ -73,7 +71,7 @@ services:
     image: nginx:latest
     hostname: ${PROJECT_NAME}-nginx
     ports:
-      - "80:80"
+      - "${HOST_PORT}:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
