@@ -62,7 +62,7 @@ JWT_3RD_PREFIX = 'api'
 # ================== Google Auth ==================
 # Add this block if you want to login with Google.
 
-SOCIAL_GOOGLE_CLIENT_ID = "376808175534-d6mefo6b1kqih3grjjose2euree2g3cs.apps.googleusercontent.com"
+SOCIAL_GOOGLE_CLIENT_ID = os.environ.get('SOCIAL_GOOGLE_CLIENT_ID')
 
 # ================== END - Google Auth ==================
 
@@ -79,6 +79,10 @@ INSTALLED_APPS = [
     "unfold.contrib.import_export",  # optional, if django-import-export package is used
     #"unfold.contrib.guardian",  # optional, if django-guardian package is used
     "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
+    # websocket
+    "daphne",
+    "channels",
+    "channels_redis",
     # django
     "django.contrib.admin",
     "django.contrib.auth",
@@ -95,8 +99,9 @@ INSTALLED_APPS = [
     "corsheaders",
     "simple_history",
     "author",
-    "django_rq",
+    "django_q",
     "django_simple_third_party_jwt", # https://github.com/NatLee/Django-Simple-3rd-Party-JWT
+    "import_export",
     # custom
     "dev_dashboard",
     "custom_jwt",
@@ -107,14 +112,26 @@ INSTALLED_APPS = [
 ]
 
 UNFOLD = {
-    "SITE_TITLE": "後端管理平台",
-    "SITE_HEADER": "後端管理平台",
+    "SITE_TITLE": "後端管理平台（Admin Platform）",
+    "SITE_HEADER": "後端管理平台（Admin Platform）",
     # "THEME": "light", # Force theme: "dark" or "light". Will disable theme switcher
     "SIDEBAR": {
         "show_search": True,  # Search in applications and models names
         "show_all_applications": True,  # Dropdown with all applications and models
     }
 }
+
+ASGI_APPLICATION = "backend.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("backend-redis", 6379)],
+        },
+    },
+}
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -147,8 +164,6 @@ TEMPLATES = [
         },
     },
 ]
-
-WSGI_APPLICATION = "backend.wsgi.application"
 
 # -------------- START - Swagger Setting --------------
 
@@ -385,15 +400,24 @@ print(f"---------- REDIS: {REDIS_HOST}:{REDIS_PORT}")
 
 # -------------- END - Redis Setting --------------
 
-# -------------- Start - RQ --------------
-RQ_QUEUES = {
-    'default': {
-        'URL': f'{REDIS_HOST}:{REDIS_PORT}/1',
-        'DEFAULT_TIMEOUT': 500,
-        'USE_REDIS_CACHE': 'default',
-    },
+# -------------- Start - Django Q --------------
+Q_CLUSTER = {
+    'name': 'backend',
+    'workers': 3,
+    'recycle': 500,
+    'retry': 3700,
+    'timeout': 3600,
+    'compress': True,
+    'save_limit': 250,
+    'queue_limit': 250,
+    # 'cpu_affinity': 1,
+    'label': 'Django Q',
+    'orm': 'default',
+    'max_attempts': 2
 }
-# -------------- END - RQ --------------
+# -------------- END - Django Q --------------
+
+
 
 # -------------- START - Cache Page Setting --------------
 CACHE_PAGE = False
