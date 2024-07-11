@@ -64,6 +64,7 @@ services:
       - DB_USER_PASSWORD=${DB_USER_PASSWORD}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
+      - SOCIAL_GOOGLE_CLIENT_ID=${SOCIAL_GOOGLE_CLIENT_ID}
 
   backend-nginx:
     <<: [ *restart, *networks ]
