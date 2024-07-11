@@ -1,18 +1,21 @@
 from django.shortcuts import render
 
-# Create your views here.
-
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-import django_rq
+from rest_framework.response import Response
 
+from django_q.tasks import async_task, fetch
 from ping.task import ping_job
 
-from common.helperfunc import api_response
 from common.cache_deco import CacheDeco
+
+
+def PingIndex(request):
+    # ping template path
+    return render(request, "index.html")
 
 class Ping(APIView):
     permission_classes = (AllowAny,)
@@ -38,7 +41,10 @@ class Ping(APIView):
         Ping!
         """
         ret = {"status": "ok", "response": "pong", "detail": "you got it! ;)"}
-        return api_response(ret)
+        return Response(ret)
+
+
+# ================== RQ ==================
 
 class PingJob(APIView):
     permission_classes = (AllowAny,)
@@ -62,10 +68,13 @@ class PingJob(APIView):
         """
         Ping by using django-rq!
         """
-        job = ping_job.delay(msg="pong")
-        ret = {"status": "ok", "response": job.id, "detail": "Good job! ;)"}
-        return api_response(ret)
-
+        task_id = async_task(
+            ping_job,
+            msg="pong",
+            sync=True,
+        )
+        ret = {"status": "ok", "response": task_id, "detail": "Good job! ;)"}
+        return Response(ret)
 
 class PingJobProgress(APIView):
     permission_classes = (AllowAny,)
@@ -89,24 +98,22 @@ class PingJobProgress(APIView):
         """
         Check progress of job
         """
-        queue = django_rq.get_queue('default')
-        job = queue.fetch_job(task_id)
 
-        if job.is_finished:
-            state = 'FINISHED'
-            details = job.result
-        elif job.is_queued:
-            state = 'QUEUED'
-        elif job.is_started:
-            state = 'STARTED'
-        elif job.is_failed:
-            state = 'FAILED'
-            details = str(job.exc_info)
+        task = fetch(task_id)
+        if not task.success:
+            state = 'PENDING'
+            details = 'Task is still pending'
         else:
-            state = 'UNKNOWN'
+            state = 'SUCCESS'
+            details = task.result
 
         response_data = {
             'state': state,
             'details': details
         }
-        return api_response(response_data)
+        return Response(response_data)
+    
+# ===============================================
+
+
+
