@@ -28,6 +28,8 @@ if settings.DEBUG:
         path(f"{URL_PREFIX}/__hidden_admin/", admin.site.urls),
         # debug dashboard
         path(f"{URL_PREFIX}/__hidden_dev_dashboard", include("dev_dashboard.urls")),
+        # example - ping
+        path(f"{URL_PREFIX}/ping", include("ping.urls"), name="ping"),
     ]
 
 # Auth
@@ -45,8 +47,6 @@ urlpatterns += [
     path(f"{URL_PREFIX}/", include(router.urls), name="api"),
     # proxy
     path(f"{URL_PREFIX}/{settings.ROUTE_PATH}/", include("api_proxy.urls")),
-    # example - ping
-    path(f"{URL_PREFIX}/ping", include("ping.urls"), name="ping"),
 ]
 
 
