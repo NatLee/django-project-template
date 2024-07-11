@@ -3,12 +3,11 @@ echo "=============== Running docker-entrypoint.sh ==============="
 
 DEBUG_="$(tr [A-Z] [a-z] <<<"$DEBUG")"
 
-if [ "$DEBUG_" = false ]; then
-    echo "> Waiting database starting"
-    /wait
-else
-    echo "> Debug with SQLite."
-fi
+echo "> Debug mode: $DEBUG_"
+
+# Wait for the database to be ready
+echo "> Waiting for the database to be ready"
+/wait
 
 echo "> Django migrations"
 python manage.py makemigrations
