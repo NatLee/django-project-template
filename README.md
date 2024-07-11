@@ -1,6 +1,6 @@
 # Django Backend Template
 
-This is a template that can be used creating a Django project.
+This is a Django backend template. It includes some useful features and tools.
 
 ## Requirements
 
@@ -8,9 +8,20 @@ Please specify the required variables in `.env` for this project.
 
 ## Features
 
-- Backend -> Django
+- Docker
+- Backend -> Django 5
 - Database -> MariaDB
 - Load Balancer -> NGINX
+
+## Other Features
+
+- API Proxy -> api_proxy
+- 3rd Party Login -> Django Simple 3rd Party JWT
+- Login Playground (Session, JWT) -> dev_dashboard
+- Websocket(WSGI) -> Django Channels
+- Async Task -> Django Q2
+- Admin Page -> Django Unfold
+- Documentation -> Redoc, Swagger
 
 ## Usage
 
@@ -52,12 +63,13 @@ bash dev-shell.sh
 bash dev-startapp <YOUR_NEW_APP_NAME>
 ```
 
-## Tools
+## Playground
+
+The playground is a place to test the login system and websocket.
 
 - DEV dashboard: http://localhost:5566/api/__hidden_dev_dashboard
 
 - Websocket Test Page: http://localhost:5566/api/ping/index
-
 
 ## Link
 
@@ -68,7 +80,3 @@ bash dev-startapp <YOUR_NEW_APP_NAME>
 - Redoc: http://localhost:5566/api/__hidden_redoc
 
 - Swagger: http://localhost:5566/api/__hidden_swagger
-
-- Session Login with Rest Framework: http://localhost:5566/api/__hidden_dev_dashboard/login
-
-- JWT Login: http://localhost:5566/api/__hidden_dev_dashboard/login
