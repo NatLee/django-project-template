@@ -28,6 +28,10 @@ Clean up and rebuild.
 rm -rf backend-sql-data &&  docker-compose down -v && docker-compose build && docker-compose up
 ```
 
+### 3rd Party Login
+
+You can check the setting in [here](https://github.com/NatLee/Django-Simple-3rd-Party-JWT?tab=readme-ov-file#backend).
+
 ## Misc
 
 - Create superuser
@@ -48,6 +52,13 @@ bash dev-shell.sh
 bash dev-startapp <YOUR_NEW_APP_NAME>
 ```
 
+## Tools
+
+- DEV dashboard: http://localhost:5566/api/__hidden_dev_dashboard
+
+- Websocket Test Page: http://localhost:5566/api/ping/index
+
+
 ## Link
 
 > Here's port `5566` is an example. You can define it in `.env` file.
@@ -61,6 +72,3 @@ bash dev-startapp <YOUR_NEW_APP_NAME>
 - Session Login with Rest Framework: http://localhost:5566/api/__hidden_dev_dashboard/login
 
 - JWT Login: http://localhost:5566/api/__hidden_dev_dashboard/login
-
-- DEV dashboard: http://localhost:5566/api/__hidden_dev_dashboard
-
