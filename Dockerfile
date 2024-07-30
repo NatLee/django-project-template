@@ -4,6 +4,10 @@ WORKDIR /app
 COPY ./backend /app
 COPY ./requirements.txt /app
 
+# For debugging purposes ------------------------
+RUN apt-get install -y -qq iputils-ping procps
+RUN apt-get install -y -qq curl
+
 # Install dependencies ---------------------------
 RUN python -m pip install --upgrade pip
 RUN pip install --upgrade setuptools
