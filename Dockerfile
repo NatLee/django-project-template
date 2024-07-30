@@ -5,6 +5,7 @@ COPY ./backend /app
 COPY ./requirements.txt /app
 
 # For debugging purposes ------------------------
+RUN apt-get update
 RUN apt-get install -y -qq iputils-ping procps
 RUN apt-get install -y -qq curl
 
