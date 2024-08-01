@@ -46,6 +46,16 @@ django-q2
 # Debug
 ipython
 ipdb
+django-debug-toolbar
+django-cprofile-middleware
+pyinstrument
+django-silk
+
+# Database visualization and extensions
+django-schema-graph
+django_extensions
+pygraphviz
+pydot
 
 # Websocket
 channels==4.0.0

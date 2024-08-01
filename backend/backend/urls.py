@@ -95,3 +95,19 @@ urlpatterns += [
 from django.conf.urls.static import static
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
+if settings.DEBUG:
+    
+    # add debug toolbar
+    import debug_toolbar
+    urlpatterns += [
+        path(f"{URL_PREFIX}/__hidden_debug/", include(debug_toolbar.urls))
+    ]
+
+    # add schema graph
+    from schema_graph.views import Schema
+    urlpatterns += [
+        path(f"{URL_PREFIX}/__hidden_schema", Schema.as_view()),
+    ]
+
+    # add silk
+    urlpatterns += [path(f"{URL_PREFIX}/silk/", include("silk.urls", namespace="silk"))]

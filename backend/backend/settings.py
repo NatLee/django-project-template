@@ -111,6 +111,29 @@ INSTALLED_APPS = [
     "ping"
 ]
 
+if DEBUG:
+    INSTALLED_APPS += [
+        "schema_graph", # Show visual schema graph
+        "django_cprofile_middleware",
+        "pyinstrument", # Show API performance
+        "silk", # Show request performance
+        "debug_toolbar", # SSR debug tool
+    ]
+    INTERNAL_IPS = [
+        '127.0.0.1',
+    ]
+
+    # this is the main reason for not showing up the toolbar
+    import mimetypes
+    mimetypes.add_type("application/javascript", ".js", True)
+
+    def show_toolbar(request):
+        return True
+
+    DEBUG_TOOLBAR_CONFIG = {
+        "SHOW_TOOLBAR_CALLBACK" : show_toolbar,
+    }
+
 UNFOLD = {
     "SITE_TITLE": "後端管理平台（Admin Platform）",
     "SITE_HEADER": "後端管理平台（Admin Platform）",
@@ -146,6 +169,15 @@ MIDDLEWARE = [
     "simple_history.middleware.HistoryRequestMiddleware",
     "author.middlewares.AuthorDefaultBackendMiddleware",
 ]
+
+if DEBUG:
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+
+    MIDDLEWARE += [
+        "pyinstrument.middleware.ProfilerMiddleware",
+        "silk.middleware.SilkyMiddleware",
+        "django_cprofile_middleware.middleware.ProfilerMiddleware",
+    ]
 
 ROOT_URLCONF = "backend.urls"
 
@@ -296,13 +328,6 @@ LOGGING = {
             'propagate': True,
             'level': "INFO"
         },
-        '''
-        'django.db.backends': {
-            'handlers': ['database'],
-            'propagate': False,
-            'level': "INFO"
-        },
-        '''
         'django.request': {
             'handlers': ['file'],
             'propagate': False,
