@@ -66,6 +66,12 @@ SOCIAL_GOOGLE_CLIENT_ID = os.environ.get('SOCIAL_GOOGLE_CLIENT_ID')
 
 # ================== END - Google Auth ==================
 
+# ================== Microsoft Auth ==================
+# Add this block if you want to login with Microsoft.
+SOCIAL_MICROSOFT_CLIENT_ID = os.environ.get('SOCIAL_MICROSOFT_CLIENT_ID')
+SOCIAL_MICROSOFT_CLIENT_SECRET = os.environ.get('SOCIAL_MICROSOFT_CLIENT_SECRET')
+# ================== END - Microsoft Auth ==================
+
 # --------------- END - Auth Setting -----------------
 
 # Application definition

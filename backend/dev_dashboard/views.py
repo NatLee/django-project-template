@@ -9,7 +9,14 @@ logger = logging.getLogger(__name__)
 
 def dashboard(request):
     # template path
-    return render(request, "dashboard/dashboard.html", {'social_google_client_id':settings.SOCIAL_GOOGLE_CLIENT_ID})
+    return render(
+        request,
+        "dashboard/dashboard.html",
+        {
+            'social_google_client_id':settings.SOCIAL_GOOGLE_CLIENT_ID,
+            'social_microsoft_client_id':settings.SOCIAL_MICROSOFT_CLIENT_ID,
+        }
+    )
 
 
 def register(request):
