@@ -1,0 +1,266 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  .chart-module {
+    background-color: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .chart-controls {
+    background-color: #f8f8f8;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  .chart-controls label {
+    font-weight: normal;
+    color: #666;
+    margin-right: 10px;
+  }
+  .chart-controls input[type="date"] {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-right: 15px;
+    color: #333;
+  }
+  .chart-controls button {
+    background-color: #417690;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .chart-controls button:hover {
+    background-color: #2b5177;
+  }
+  #loginChart {
+    background-color: #fff;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+
+{% if show_chart %}
+<div class="chart-module">
+  <h2 style="color: #417690;">所有使用者登入次數圖表</h2>
+  <div class="chart-controls">
+    <label for="startDate">開始日期：</label>
+    <input type="date" id="startDate" name="startDate">
+    <label for="endDate">結束日期：</label>
+    <input type="date" id="endDate" name="endDate">
+    <button id="updateChart">更新圖表</button>
+  </div>
+  <canvas id="loginChart" width="400" height="200"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const loginChart = document.getElementById('loginChart');
+  const startDateInput = document.getElementById('startDate');
+  const endDateInput = document.getElementById('endDate');
+  const updateChartButton = document.getElementById('updateChart');
+
+  // 設置默認日期範圍（一個月）
+  const today = new Date();
+  const oneMonthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+  startDateInput.value = oneMonthAgo.toISOString().split('T')[0];
+  endDateInput.value = today.toISOString().split('T')[0];
+
+  let chart;
+
+  function fetchChartData(startDate, endDate) {
+    const url = `chart-data/?start_date=${startDate}&end_date=${endDate}`;
+    return fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        return data;
+      })
+      .catch(error => {
+        console.error('Error fetching chart data:', error);
+        return [];
+      });
+  }
+
+  function createChart(data) {
+    if (chart) {
+      chart.destroy();
+    }
+
+    function generateColors(count) {
+      const baseColors = [
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(255, 159, 64, 0.7)',
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(201, 203, 207, 0.7)'
+      ];
+      return Array.from({length: count}, (_, i) => baseColors[i % baseColors.length]);
+    }
+
+    const users = [...new Set(data.map(item => item.username))];
+    const userIDs = [...new Set(data.map(item => item.id))];
+    const colors = generateColors(users.length);
+
+    // Create unique username by combining id and username
+    const uniqueUsers = userIDs.map((id, index) => `[${id}] ${users[index]}`);
+
+    const datasets = uniqueUsers.map((user, index) => {
+      const userLogins = data.filter(item => item.username === users[index]);
+      return {
+        label: user,
+        data: userLogins.map(item => ({ x: item.date, y: item.count })),
+        borderColor: colors[index],
+        backgroundColor: colors[index].replace('0.7', '0.2'),
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      };
+    });
+
+    chart = new Chart(loginChart, {
+      type: 'line',
+      data: { datasets },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+              unit: 'day',
+              displayFormats: {
+                day: 'yyyy/MM/dd'
+              }
+            },
+            title: {
+              display: true,
+              text: '日期',
+              color: '#666',
+              font: {
+                size: 14,
+                weight: 'normal'
+              }
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            },
+            ticks: {
+              color: '#666'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              color: '#666'
+            },
+            title: {
+              display: true,
+              text: '登入次數',
+              color: '#666',
+              font: {
+                size: 14,
+                weight: 'normal'
+              }
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              font: {
+                size: 12
+              },
+              usePointStyle: true,
+              pointStyle: 'circle',
+              color: '#666'
+            }
+          },
+          title: {
+            display: true,
+            text: '所有使用者登入次數圖表',
+            color: '#417690',
+            font: {
+              size: 18,
+              weight: 'normal'
+            },
+            padding: {
+              top: 10,
+              bottom: 30
+            }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            titleColor: '#333',
+            bodyColor: '#666',
+            borderColor: '#e1e1e1',
+            borderWidth: 1,
+            titleFont: {
+              size: 14,
+              weight: 'bold'
+            },
+            bodyFont: {
+              size: 12
+            },
+            padding: 10,
+            callbacks: {
+              title: function(tooltipItems) {
+                return new Date(tooltipItems[0].parsed.x).toLocaleDateString('zh-TW', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+                });
+              }
+            }
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
+        },
+        animation: {
+          duration: 1000,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+  }
+
+  function updateChart() {
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+    fetchChartData(startDate, endDate).then(createChart);
+  }
+
+  updateChartButton.addEventListener('click', updateChart);
+
+  // 初始加載圖表
+  updateChart();
+});
+</script>
+{% endif %}
+
+{% endblock %}

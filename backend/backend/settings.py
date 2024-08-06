@@ -103,10 +103,11 @@ INSTALLED_APPS = [
     "django_simple_third_party_jwt", # https://github.com/NatLee/Django-Simple-3rd-Party-JWT
     "import_export",
     # custom
-    "dev_dashboard",
     "custom_jwt",
+    "dev_dashboard",
     "api_proxy",
     "userprofile",
+    "django_login_history",
     # test
     "ping"
 ]
