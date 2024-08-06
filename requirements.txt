@@ -16,7 +16,7 @@ django-simple-history==3.7.0
 django-author==1.2.0
 djoser==2.2.3
 
-django-simple-third-party-jwt==0.2.1
+django-simple-third-party-jwt==0.2.2
 
 # Static files
 whitenoise==6.5.0
