@@ -44,17 +44,17 @@
     // 測試 JWT refresh API是否有效
     $.ajax({
       type: "POST",
-      url: "/{{ jwt_refresh_url }}",
+      url: "/api/auth/token/refresh",
       data: {
         refresh: jwt_token_refresh,
       },
       success: function (data) {
-        localStorage.setItem("access_token", data.access);
-        const jwt_token = data.access;
+        localStorage.setItem("access_token", data.access_token);
+        const jwt_token = data.access_token;
         // 測試 JWT verify API是否有效
         $.ajax({
           type: "POST",
-          url: "/{{ jwt_verify_url }}",
+          url: "/api/auth/token/verify",
           data: { token: jwt_token },
           headers: {
             Authorization: "Bearer" + " " + jwt_token,

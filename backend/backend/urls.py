@@ -35,7 +35,7 @@ if settings.DEBUG:
 # Auth
 urlpatterns += [
     # 3rd party jwt
-    path(f"{settings.JWT_3RD_PREFIX}/", include("django_simple_third_party_jwt.urls")),
+    path(f"", include("django_simple_third_party_jwt.urls")),
     # auth
     path(f"{URL_PREFIX}/auth/", include("custom_jwt.urls")),
 ]

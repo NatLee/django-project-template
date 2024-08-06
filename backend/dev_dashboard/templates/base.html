@@ -1,68 +1,71 @@
-{% load static %}
 {% load bootstrap3 %}
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
     <meta name="google-signin-scope" content="profile email">
-    <meta name="google-signin-client_id"
-        content="{{ social_google_client_id }}">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-
+    <meta name="google-signin-client_id" content="{{ social_google_client_id }}">
     <title>{% block title %}{% endblock %}</title>
-    <link href="{% static 'stylesheets/login.css' %}" rel="stylesheet">
-    <link rel="stylesheet" type="text/css"
-        href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/fontawesome.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-
+    
+    <!-- Bootstrap CSS -->
     {% bootstrap_css %}
-    {% bootstrap_javascript %}
-
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/fontawesome.min.css">
+    
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    
+    <!-- Google Sign-in -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body>
-
     <nav class="navbar navbar-default">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="{% url 'dashboard' %}">Dev</a>
+                <a class="navbar-brand" href="{% url 'dev-dashboard' %}">Dev</a>
             </div>
             <ul class="nav navbar-nav navbar-right">
-
-                <li><a href="/api/__hidden_swagger"><span class="glyphicon glyphicon-log-in"></span> Swagger </a></li>
-                <li><a href="/api/__hidden_redoc"><span class="glyphicon glyphicon-log-in"></span> Redoc </a></li>
+                <!-- Dynamic Links -->
+                {% if admin_url %}
+                <li><a href="/api/__hidden_admin/"><span class="glyphicon glyphicon-log-in"></span> Admin</a></li>
+                {% endif %}
+                {% if swagger_url %}
+                <li><a href="/api/__hidden_swagger"><span class="glyphicon glyphicon-log-in"></span> Swagger</a></li>
+                {% endif %}
+                {% if redoc_url %}
+                <li><a href="/api/__hidden_redoc"><span class="glyphicon glyphicon-log-in"></span> Redoc</a></li>
+                {% endif %}
+                
+                <!-- Login/Logout Buttons -->
+                <li><a href="/api/__hidden_dev_dashboard/login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
 
                 {% if request.user.is_authenticated %}
                 <li><a href="#"><span class="glyphicon glyphicon-user"></span> Hello {{ request.user }}</a></li>
-                {% else %}
-                <li><a href="{% url 'login' %}"><span class="glyphicon glyphicon-log-in"></span> JWT Login</a></li>
-                <li><a href="/api/__hidden_admin/login/?next=/api/__hidden_dev_dashboard"><span
-                            class="glyphicon glyphicon-log-in"></span>
-                        Session Login</a></li>
-                <li><a href="{% url 'register' %}"><span class="glyphicon glyphicon-log-in"></span> Sign up</a></li>
+                <li><a href="{% url 'dev-session-logout' %}"><span class="glyphicon glyphicon-log-out"></span> Session Logout</a></li>
                 {% endif %}
-                <li><a href="#" onclick=logout()><span class="glyphicon glyphicon-log-in"></span> JWT Logout</a></li>
-                <li><a href="/api/__hidden_admin/logout/?next=/api/__hidden_dev_dashboard"><span
-                            class="glyphicon glyphicon-log-in"></span>
-                        Session Logout</a></li>
+                <li><a href="#" onclick="logout()"><span class="glyphicon glyphicon-log-out"></span> JWT Logout</a></li>
+
+                <!-- Third-party Logins -->
                 <li>
-                    <div id="g_id_onload"
-                        data-client_id="{{ social_google_client_id }}"
-                        data-callback="get_jwt_using_google_credential" </div>
-                        <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline"
-                            data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left">
-                        </div>
+                    <div id="g_id_onload" data-client_id="{{ social_google_client_id }}" data-callback="get_jwt_using_google_credential"></div>
+                    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
+                </li>
+                <li>
+                    <button id="microsoft-login-button" class="btn" onclick="location.href='/api/auth/microsoft/signin';">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/2048px-Microsoft_logo.svg.png" alt="Microsoft logo" style="width: 30px; height: 30px;"> Login with Microsoft
+                    </button>
                 </li>
             </ul>
         </div>
     </nav>
 
-
     <div class="container">
         {% block content %}
         {% endblock %}
     </div>
+
 </body>
 
 <script>
@@ -73,10 +76,11 @@
             url: "/api/auth/google/token",
             data: { credential: credential }
         }).done(function (data) {
-            const access_token = data.access_token;
+            const access_token = data.access;
             const refresh_token = data.refresh_token;
             localStorage.setItem('access_token', access_token);
             localStorage.setItem('refresh_token', refresh_token);
+            console.log('Google Login');
             $.ajax({
                 type: "POST",
                 url: "/api/auth/token/verify",
@@ -103,5 +107,15 @@
         });
     }
 </script>
+
+
+<script>
+    function logout() {
+      window.localStorage.removeItem("access_token");
+      window.localStorage.removeItem("refresh_token");
+      window.location.href = "/api/__hidden_dev_dashboard";
+    }
+</script>
+
 
 </html>
