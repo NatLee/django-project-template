@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exceptions</title>
+</head>
+<body>
+    <div class="container">
+        <h1>綁定失敗：此第三方帳號已經被使用</h1>
+        <p>此第三方帳號已經被使用，請使用其他帳號或是直接登入。</p>
+        <div id="message" class="message">此視窗將在 <span id="countdown" class="countdown">3</span> 秒後關閉</div>
+    </div>
+
+    <script>
+        (function() {
+
+            // 倒計時功能
+            var countdownElement = document.getElementById('countdown');
+            var messageElement = document.getElementById('message');
+            var secondsLeft = 3;
+
+            function updateCountdown() {
+                countdownElement.textContent = secondsLeft;
+                if (secondsLeft > 0) {
+                    secondsLeft--;
+                    setTimeout(updateCountdown, 1000);
+                } else {
+                    messageElement.textContent = '您可以安全地關閉此視窗。';
+                    // 關閉窗口
+                    window.close();
+                }
+            }
+
+            updateCountdown();
+        })();
+    </script>
+</body>
+</html>

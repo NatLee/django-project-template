@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Connect Callback</title>
+</head>
+<body>
+    <div class="container">
+        <h1>第三方帳號連結成功</h1>
+        <div id="message" class="message">此視窗將在 <span id="countdown" class="countdown">3</span> 秒後關閉</div>
+    </div>
+
+    <script>
+        (function() {
+
+            // 倒計時功能
+            var countdownElement = document.getElementById('countdown');
+            var messageElement = document.getElementById('message');
+            var secondsLeft = 3;
+
+            localStorage.setItem('loginStatus', 'success');
+
+            function updateCountdown() {
+                countdownElement.textContent = secondsLeft;
+                if (secondsLeft > 0) {
+                    secondsLeft--;
+                    setTimeout(updateCountdown, 1000);
+                } else {
+                    messageElement.textContent = '您可以安全地關閉此視窗。';
+                    // 關閉窗口
+                    window.close();
+                }
+            }
+
+            updateCountdown();
+        })();
+    </script>
+</body>
+</html>
