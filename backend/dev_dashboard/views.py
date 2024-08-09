@@ -20,13 +20,6 @@ def dashboard(request):
         }
     )
 
-
-def register(request):
-    user_form = UserRegistrationForm()
-    # template path
-    return render(request, "dashboard/register.html", {"user_form": user_form})
-
-
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
