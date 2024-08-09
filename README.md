@@ -18,8 +18,9 @@ Please specify the required variables in `.env` for this project.
 ## Other Features
 
 - API Proxy -> api_proxy
-- 3rd Party Login -> Django Simple 3rd Party JWT
+- User login history -> django_login_history
 - Login Playground (Session, JWT) -> dev_dashboard
+- 3rd Party Login with JWT -> Custom Allauth Adapter (authentication)
 - Websocket(WSGI) -> Django Channels
 - Async Task -> Django Q2
 - Admin Page -> Django Unfold
