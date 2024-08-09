@@ -8,13 +8,7 @@ from drf_yasg.generators import OpenAPISchemaGenerator
 
 from rest_framework.permissions import AllowAny, IsAdminUser
 
-from rest_framework.routers import DefaultRouter
-from djoser import views as djoser_views
-
 from django.conf import settings
-
-router = DefaultRouter(trailing_slash=False)
-router.register("users", djoser_views.UserViewSet)
 
 URL_PREFIX = 'api'
 
@@ -34,17 +28,17 @@ if settings.DEBUG:
 
 # Auth
 urlpatterns += [
-    # 3rd party jwt
-    path(f"", include("django_simple_third_party_jwt.urls")),
-    # auth
+    # 3rd party
+    path(f'{URL_PREFIX}/allauth/', include('allauth.urls')),
+    path(f"{URL_PREFIX}/_allauth/", include("allauth.headless.urls")),
+    # Token
+    path(f"{URL_PREFIX}/account/", include("authentication.urls")),
     path(f"{URL_PREFIX}/auth/", include("custom_jwt.urls")),
 ]
 
 
 # Custom APP route
 urlpatterns += [
-    # index
-    path(f"{URL_PREFIX}/", include(router.urls), name="api"),
     # proxy
     path(f"{URL_PREFIX}/{settings.ROUTE_PATH}/", include("api_proxy.urls")),
 ]
