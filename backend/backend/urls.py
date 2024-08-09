@@ -15,7 +15,9 @@ URL_PREFIX = 'api'
 
 urlpatterns = []
 
-# pages
+# ============
+# Debug Pages
+# ============
 if settings.DEBUG:
     urlpatterns += [
         # admin
@@ -26,20 +28,27 @@ if settings.DEBUG:
         path(f"{URL_PREFIX}/ping", include("ping.urls"), name="ping"),
     ]
 
+# ============
 # Auth
+# ============
 urlpatterns += [
-    # 3rd party
-    path(f'{URL_PREFIX}/allauth/', include('allauth.urls')),
-    path(f"{URL_PREFIX}/_allauth/", include("allauth.headless.urls")),
-    # Token
-    path(f"{URL_PREFIX}/account/", include("authentication.urls")),
+    # ============
+    # Custom Allauth
+    # ============
+    path('api/allauth/', include('authentication.urls')),
+    # ============
+    # Custom Simple JWT
+    # ============
     path(f"{URL_PREFIX}/auth/", include("custom_jwt.urls")),
 ]
 
-
+# =================
 # Custom APP route
+# =================
 urlpatterns += [
-    # proxy
+    # ============
+    # 代理其他API的路由
+    # ============
     path(f"{URL_PREFIX}/{settings.ROUTE_PATH}/", include("api_proxy.urls")),
 ]
 
