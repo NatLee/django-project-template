@@ -13,10 +13,8 @@ django-bootstrap3==21.2
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 django-simple-history==3.7.0
-django-author==1.2.0
-djoser==2.2.3
 
-django-simple-third-party-jwt==0.3.0
+django-allauth==64.0.0
 
 # Static files
 whitenoise==6.5.0
