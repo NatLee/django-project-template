@@ -1,6 +1,6 @@
 # Django Backend Template
 
-![cover][./doc/cover.png]
+![cover](./doc/cover.png)
 
 This is a Django backend template. It includes some useful features and tools.
 
