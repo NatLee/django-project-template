@@ -54,30 +54,65 @@ SECURE_REFERRER_POLICY = "no-referrer-when-downgrade"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
 LOGIN_REDIRECT_URL = "/"
-VALID_REGISTER_DOMAINS = ["gmail.com", "hotmail.com"] # Only these domains can login.
 
-# API URL Prefix
-JWT_3RD_PREFIX = 'api'
 
-# ================== Google Auth ==================
-# Add this block if you want to login with Google.
+# -------------- START - Allauth Setting --------------
+SOCIALACCOUNT_PROVIDERS = {}
 
-SOCIAL_GOOGLE_CLIENT_ID = os.environ.get('SOCIAL_GOOGLE_CLIENT_ID')
+SOCIAL_GOOGLE_CLIENT_ID = os.environ.get("SOCIAL_GOOGLE_CLIENT_ID", None)
+SOCIAL_MICROSOFT_CLIENT_ID = os.environ.get("SOCIAL_MICROSOFT_CLIENT_ID", None)
 
-# ================== END - Google Auth ==================
+if SOCIAL_GOOGLE_CLIENT_ID:
+    print(f"---------- GOOGLE_CLIENT_ID: {SOCIAL_GOOGLE_CLIENT_ID}")
+    SOCIALACCOUNT_PROVIDERS['google'] = {
+        'APP': {
+            'client_id': SOCIAL_GOOGLE_CLIENT_ID,
+            'secret': os.environ.get("SOCIAL_GOOGLE_CLIENT_SECRET"),
+            'key': ''
+        }
+    }
 
-# ================== Microsoft Auth ==================
-# Add this block if you want to login with Microsoft.
-SOCIAL_MICROSOFT_CLIENT_ID = os.environ.get('SOCIAL_MICROSOFT_CLIENT_ID')
-SOCIAL_MICROSOFT_CLIENT_SECRET = os.environ.get('SOCIAL_MICROSOFT_CLIENT_SECRET')
-# ================== END - Microsoft Auth ==================
+if SOCIAL_MICROSOFT_CLIENT_ID:
+    print(f"---------- MICROSOFT_CLIENT_ID: {SOCIAL_MICROSOFT_CLIENT_ID}")
+    SOCIALACCOUNT_PROVIDERS['microsoft'] = {
+        "APPS": [
+            {
+                "client_id": SOCIAL_MICROSOFT_CLIENT_ID,
+                "secret": os.environ.get("SOCIAL_MICROSOFT_CLIENT_SECRET"),
+                "settings": {
+                    "tenant": "common",
+                    # Optional: override URLs (use base URLs without path)
+                    "login_url": "https://login.microsoftonline.com",
+                    "graph_url": "https://graph.microsoft.com",
+                }
+            }
+        ]
+    }
 
-# --------------- END - Auth Setting -----------------
+SOCIALACCOUNT_LOGIN_ON_GET=True # Allow login via GET request
+ACCOUNT_LOGOUT_ON_GET=True # Allow logout via GET request
+SOCIALACCOUNT_AUTO_SIGNUP = True
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_ADAPTER = 'authentication.adapter.MyAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'authentication.adapter.MySocialAccountAdapter'
+
+# ========================
+# Custom Allauth settings
+# ========================
+SOCIALACCOUNT_VALID_EMAIL_DOMAINS = [
+    'gmail.com',
+    'hotmail.com',
+]
+
+# --------------- END - Allauth Setting ----------------
 
 # Application definition
 
 INSTALLED_APPS = [
-    # admin skin
+    # ==================
+    # Admin Pkgs
+    # ==================
     "unfold",  # before django.contrib.admin
     "unfold.contrib.filters",  # optional, if special filters are needed
     "unfold.contrib.forms",  # optional, if special form elements are needed
@@ -85,40 +120,70 @@ INSTALLED_APPS = [
     "unfold.contrib.import_export",  # optional, if django-import-export package is used
     #"unfold.contrib.guardian",  # optional, if django-guardian package is used
     "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
-    # websocket
+    # ==================
+    # Websocket Pkgs
+    # ==================
     "daphne",
     "channels",
     "channels_redis",
-    # django
+    # ==================
+    # Django
+    # ==================
+    "django.contrib.sites", # Allauth pkg needs SITE_ID
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # base
-    "rest_framework",
-    "drf_yasg",
-    # package
-    "bootstrap3",
-    "djoser",
-    "corsheaders",
-    "simple_history",
-    "author",
-    "django_q",
-    "django_simple_third_party_jwt", # https://github.com/NatLee/Django-Simple-3rd-Party-JWT
-    "import_export",
-    # custom
+    # ==================
+    # Third party pkgs
+    # ==================
+    "rest_framework", # API framework
+    "drf_yasg", # Swagger
+    "bootstrap3", # Bootstrap
+    "corsheaders", # CORS
+    "simple_history", # History
+    "django_q", # Schedule and async tasks
+    "import_export", # Import and export data
+    # ==================
+    # Allauth 3rd Party Account
+    # ==================
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    # ==================
+    # Allauth Providers
+    # ==================
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.microsoft',
+    # ==================
+    # Custom Apps
+    # ==================
+    # 複寫第三方登入驗證APP
+    "authentication",
+    # 複寫發JWT用的APP
     "custom_jwt",
+    # 展示用的Dashboard
     "dev_dashboard",
+    # API代理
     "api_proxy",
-    "userprofile",
+    # 記錄使用者登入紀錄
     "django_login_history",
-    # test
+    # 使用者額外資訊
+    "userprofile",
+    # ==================
+    # Test Apps
+    # ==================
     "ping"
 ]
 
+SITE_ID = 1  # Make sure SITE_ID is set
+
 if DEBUG:
+    # ==================
+    # Debug Pkgs
+    # ==================
     INSTALLED_APPS += [
         "schema_graph", # Show visual schema graph
         "django_cprofile_middleware",
@@ -174,7 +239,11 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
-    "author.middlewares.AuthorDefaultBackendMiddleware",
+    # ==================
+    # All Auth Middleware
+    # ==================
+    "allauth.account.middleware.AccountMiddleware",
+    # ==================
 ]
 
 if DEBUG:
