@@ -141,7 +141,6 @@ INSTALLED_APPS = [
     # ==================
     "rest_framework", # API framework
     "drf_yasg", # Swagger
-    "bootstrap3", # Bootstrap
     "corsheaders", # CORS
     "simple_history", # History
     "django_q", # Schedule and async tasks
