@@ -1,88 +1,95 @@
 {% extends "base.html" %}
-{% block title %}Dev Dashboard{% endblock %}
+{% load static %}
+{% block title %}開發者儀表板{% endblock %}
 
 {% block content %}
-<!-- Jumbotron for Main Heading -->
-<div class="jumbotron text-center">
-  <h1 class="display-4">Dev Dashboard</h1>
-  <p class="lead">Welcome to your dashboard.</p>
-</div>
+<div class="container mt-4">
+  <h1 class="mb-4">開發者儀表板</h1>
 
-<!-- Client IDs Section -->
-<div class="container mb-4">
-  <h2>Google Client ID</h2>
-  <div class="alert alert-info">{{ social_google_client_id }}</div>
+  <!-- Client IDs Section -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h2 class="h5 mb-0">客戶端 ID</h2>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <h3 class="h6">Google Client ID</h3>
+          <div class="alert alert-info">{{ social_google_client_id }}</div>
+        </div>
+        <div class="col-md-6">
+          <h3 class="h6">Microsoft Client ID</h3>
+          <div class="alert alert-info">{{ social_microsoft_client_id }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <h2>Microsoft Client ID</h2>
-  <div class="alert alert-info">
-      {{ social_microsoft_client_id }}
+  <!-- Login Buttons -->
+  <div class="card mb-4">
+    <div class="card-header bg-success text-white">
+      <h2 class="h5 mb-0">社交帳號操作</h2>
+    </div>
+    <div class="card-body">
+      <div id="loginButtons" class="row">
+        <div class="col-sm-3 mb-2">
+          <a title="Google" href="/api/allauth/google/login/?process=login" class="btn btn-danger btn-block btn-social">
+            <i class="fab fa-google"></i> 登入 Google
+          </a>
+        </div>
+        <div class="col-sm-3 mb-2">
+          <a title="Google" href="/api/allauth/google/login/?process=connect" class="btn btn-outline-danger btn-block btn-social">
+            <i class="fab fa-google"></i> 綁定 Google
+          </a>
+        </div>
+        <div class="col-sm-3 mb-2">
+          <a title="Microsoft" href="/api/allauth/microsoft/login/?process=login" class="btn btn-primary btn-block btn-social">
+            <i class="fab fa-microsoft"></i> 登入 Microsoft
+          </a>
+        </div>
+        <div class="col-sm-3 mb-2">
+          <a title="Microsoft" href="/api/allauth/microsoft/login/?process=connect" class="btn btn-outline-primary btn-block btn-social">
+            <i class="fab fa-microsoft"></i> 綁定 Microsoft
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bound Social Accounts -->
+  <div class="card mb-4">
+    <div class="card-header bg-info text-white">
+      <h2 class="h5 mb-0">已綁定的社交帳號</h2>
+    </div>
+    <div class="card-body">
+      <div id="socialAccounts">
+        <!-- 已綁定的社交帳號列表將在這裡顯示 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JWT and Session Fields -->
+  <div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+      <h2 class="h5 mb-0">認證狀態</h2>
+    </div>
+    <div class="card-body">
+      <h3 class="h6">JWT Token</h3>
+      <div class="alert alert-secondary" id="token"></div>
+      <div class="alert alert-success" id="result"></div>
+
+      <h3 class="h6">Session 狀態</h3>
+      {% if request.user.is_authenticated %}
+      <div class="alert alert-primary">
+        您已以 `{{ request.user }}` 的身份登入此會話！
+      </div>
+      {% else %}
+      <div class="alert alert-danger">尚未登入任何會話。</div>
+      {% endif %}
+    </div>
   </div>
 </div>
 
-<!-- JWT and Session Fields -->
-<div class="container">
-  <h2>JWT Field</h2>
-  <div class="alert alert-secondary" id="token"></div>
-  <div class="alert alert-success" id="result"></div>
-
-  <h2>Session Field</h2>
-  {% if request.user.is_authenticated %}
-  <div class="alert alert-primary">
-    You are logged in as `{{ request.user }}` with this session!
-  </div>
-  {% else %}
-  <div class="alert alert-danger">No any session login.</div>
-  {% endif %}
-</div>
-
-
-<script>
-  var jwt_token = localStorage.getItem("access_token");
-  var jwt_token_refresh = localStorage.getItem("refresh_token");
-
-  if (jwt_token) {
-    // 測試 JWT refresh API是否有效
-    $.ajax({
-      type: "POST",
-      url: "/api/auth/token/refresh",
-      data: {
-        refresh: jwt_token_refresh,
-      },
-      success: function (data) {
-        localStorage.setItem("access_token", data.access_token);
-        const jwt_token = data.access_token;
-        // 測試 JWT verify API是否有效
-        $.ajax({
-          type: "POST",
-          url: "/api/auth/token/verify",
-          data: { token: jwt_token },
-          headers: {
-            Authorization: "Bearer" + " " + jwt_token,
-          },
-          success: function (data) {
-            var json_string = JSON.stringify(data, null, 2);
-            console.log(data);
-            $("#token").text("Bearer " + jwt_token);
-            $("#token").css("color", "green");
-            if (json_string) {
-              $("#result").text(" Token verified successfully!");
-            }
-            $("#result").css("color", "blue").css("white-space", "pre-line");
-          },
-          error: function (data) {
-            var result = "please login " + data.responseText;
-            $("#result").text(result).css("color", "red");
-          },
-        });
-      },
-      error: function (data) {
-        var result = "please login " + data.responseText;
-        $("#result").text(result).css("color", "red");
-      },
-    });
-  } else {
-    $("#token").text("Have not login with JWT token!");
-  }
-</script>
-
+<!-- 引用外部 JavaScript 文件 -->
+<script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %}
