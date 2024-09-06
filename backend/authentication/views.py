@@ -6,6 +6,9 @@ def social_login_callback(request):
 def social_connect_callback(request):
     return render(request, 'social_connect_callback.html')
 
+def social_first_login_callback(request):
+    return render(request, 'social_first_login_callback.html')
+
 def duplicate_email(request):
     return render(request, 'exceptions/duplicate_email.html')
 

@@ -26,7 +26,8 @@ urlpatterns = [
     path('social/login/callback', views.social_login_callback, name='social-login-callback'),
     # 第三方帳號連接 Callback
     path('social/connect/callback', views.social_connect_callback, name='social-connect-callback'),
-
+    # 使用者第一次登入
+    path('social/first-login/callback', views.social_first_login_callback, name='social-first-login-callback'),
     # ===================
     # Custom Exceptions
     # ===================

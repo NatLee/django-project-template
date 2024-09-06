@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Callback</title>
+</head>
+<body>
+    <div class="container">
+        <h1>使用者初次登入成功</h1>
+        <div id="message" class="message">此視窗將在 <span id="countdown" class="countdown">3</span> 秒後關閉</div>
+    </div>
+
+    <script>
+        (function() {
+            // 解析 URL 參數
+            function getUrlParameter(name) {
+                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+                var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+                var results = regex.exec(location.search);
+                return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+            }
+
+            // 獲取 tokens
+            var tokensJson = getUrlParameter('tokens');
+
+            // 先清空登入狀態
+            localStorage.removeItem('loginStatus');
+
+            // 如果 tokens 存在，則解析並存儲到 localStorage
+            if (tokensJson) {
+                try {
+                    var tokens = JSON.parse(tokensJson);
+                    localStorage.setItem('access_token', tokens.access_token);
+                    localStorage.setItem('refresh_token', tokens.refresh_token);
+                    localStorage.setItem('loginStatus', 'success');
+                    console.log('Tokens 已成功儲存');
+                } catch (e) {
+                    console.error('解析或存儲 tokens 時發生錯誤:', e);
+                }
+            } else {
+                console.warn('未找到 tokens');
+            }
+
+            // 倒計時功能
+            var countdownElement = document.getElementById('countdown');
+            var messageElement = document.getElementById('message');
+            var secondsLeft = 3;
+
+            function updateCountdown() {
+                countdownElement.textContent = secondsLeft;
+                if (secondsLeft > 0) {
+                    secondsLeft--;
+                    setTimeout(updateCountdown, 1000);
+                } else {
+                    messageElement.textContent = '您可以安全地關閉此視窗。';
+                    // 關閉窗口
+                    window.close();
+                }
+            }
+
+            updateCountdown();
+        })();
+    </script>
+</body>
+</html>
