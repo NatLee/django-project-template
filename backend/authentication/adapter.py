@@ -1,16 +1,18 @@
-from allauth.account.adapter import DefaultAccountAdapter
-from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from django.urls import reverse
-from urllib.parse import urlencode
 import json
+from urllib.parse import urlencode
 
+from django.urls import reverse
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.shortcuts import redirect
+
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from allauth.account.adapter import DefaultAccountAdapter
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.account.utils import user_email
 from allauth.socialaccount.models import SocialAccount
-
 from allauth.core.exceptions import ImmediateHttpResponse
-from django.shortcuts import redirect
 
 
 import logging
@@ -25,15 +27,25 @@ class MyAccountAdapter(DefaultAccountAdapter):
         if auth_methods and auth_methods[0].get('method') == "socialaccount":
             # 獲取 tokens
             tokens = self.get_tokens(request)
-            base_url = reverse('social-login-callback')
             query_params = urlencode({'tokens': json.dumps(tokens)})
+            base_url = reverse('social-login-callback')
             return f"{base_url}?{query_params}"
-        
-        # 如果不是社交帳號登入,使用默認重定向
+
         return super().get_login_redirect_url(request)
 
+    def get_signup_redirect_url(self, request):
+        # 判斷使用者是否已經登入
+        # 這邊是為了處理第三方帳號的第一次登入
+        if request.user.is_authenticated:
+            # 獲取 tokens
+            tokens = self.get_tokens(request)
+            query_params = urlencode({'tokens': json.dumps(tokens)})
+            base_url = reverse('social-first-login-callback')
+            return f"{base_url}?{query_params}"
+
+        return super().get_signup_redirect_url(request)
+
     def get_tokens(self, request):
-        from rest_framework_simplejwt.tokens import RefreshToken
         user = request.user
         refresh = RefreshToken.for_user(user)
         return {
