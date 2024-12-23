@@ -107,16 +107,6 @@ SOCIALACCOUNT_VALID_EMAIL_DOMAINS = [
 
 INSTALLED_APPS = [
     # ==================
-    # Admin Pkgs
-    # ==================
-    "unfold",  # before django.contrib.admin
-    "unfold.contrib.filters",  # optional, if special filters are needed
-    "unfold.contrib.forms",  # optional, if special form elements are needed
-    "unfold.contrib.inlines",  # optional, if special inlines are needed
-    "unfold.contrib.import_export",  # optional, if django-import-export package is used
-    #"unfold.contrib.guardian",  # optional, if django-guardian package is used
-    "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
-    # ==================
     # Websocket Pkgs
     # ==================
     "daphne",
@@ -201,15 +191,6 @@ if DEBUG:
         "SHOW_TOOLBAR_CALLBACK" : show_toolbar,
     }
 
-UNFOLD = {
-    "SITE_TITLE": "後端管理平台（Admin Platform）",
-    "SITE_HEADER": "後端管理平台（Admin Platform）",
-    # "THEME": "light", # Force theme: "dark" or "light". Will disable theme switcher
-    "SIDEBAR": {
-        "show_search": True,  # Search in applications and models names
-        "show_all_applications": True,  # Dropdown with all applications and models
-    }
-}
 
 ASGI_APPLICATION = "backend.asgi.application"
 

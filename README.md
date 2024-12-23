@@ -23,7 +23,6 @@ Please specify the required variables in `.env` for this project.
 - 3rd Party Login with JWT -> Custom Allauth Adapter (authentication)
 - Websocket(WSGI) -> Django Channels
 - Async Task -> Django Q2
-- Admin Page -> Django Unfold
 - Documentation -> Redoc, Swagger
 
 ## Usage

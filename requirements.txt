@@ -18,7 +18,6 @@ whitenoise==6.5.0
 django-redis==5.4.0
 # Admin panel customization
 django-import-export==4.1.1
-django-unfold==0.30.0
 
 # Swagger documentation
 drf-yasg==1.21.4

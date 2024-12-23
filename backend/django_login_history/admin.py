@@ -1,9 +1,9 @@
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
+
 from django_login_history.models import Login
 from django.urls import path
 from django.http import JsonResponse
-
-from unfold.admin import ModelAdmin
 
 @admin.register(Login)
 class LoginModelAdmin(ModelAdmin):
