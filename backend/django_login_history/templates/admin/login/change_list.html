@@ -5,46 +5,130 @@
 {{ block.super }}
 <style>
   .chart-module {
-    background-color: #fff;
-    border: 1px solid #e1e1e1;
-    border-radius: 4px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin: var(--spacing-vertical) 0;
+    background: var(--body-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--box-shadow);
+    transition: all 0.3s ease;
   }
+
+  .chart-module {
+    color: var(--body-fg);
+    font-size: var(--font-size-h2);
+    padding: var(--spacing-vertical) var(--spacing-horizontal);
+    margin: 0;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 500;
+  }
+
   .chart-controls {
-    background-color: #f8f8f8;
-    border: 1px solid #e1e1e1;
-    border-radius: 4px;
-    padding: 15px;
-    margin-bottom: 20px;
+    padding: var(--spacing-vertical) var(--spacing-horizontal);
+    background: var(--darkened-bg);
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
   }
+
   .chart-controls label {
-    font-weight: normal;
-    color: #666;
-    margin-right: 10px;
+    color: var(--body-fg);
+    font-size: var(--font-size-small);
   }
+
   .chart-controls input[type="date"] {
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-right: 15px;
-    color: #333;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--body-bg);
+    color: var(--body-fg);
+    font-size: 14px;
+    transition: all 0.2s ease;
   }
+
+  .chart-controls input[type="date"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-fg);
+  }
+
   .chart-controls button {
-    background-color: #417690;
-    color: white;
+    background: var(--primary);
+    color: var(--primary-fg);
     border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
+    padding: 8px 16px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
   }
+  
   .chart-controls button:hover {
-    background-color: #2b5177;
+    background: var(--primary-darker);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
+  
+  .chart-controls button:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  
+  /* 添加點擊效果 */
+  .chart-controls button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+  }
+  
+  .chart-controls button:active::after {
+    animation: ripple 0.6s ease-out;
+  }
+  
+  @keyframes ripple {
+    0% {
+      transform: scale(0, 0);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(40, 40);
+      opacity: 0;
+    }
+  }
+
+  .chart-container {
+    padding: var(--spacing-vertical) var(--spacing-horizontal);
+    height: 600px; /* 設定固定高度 */
+    position: relative;
+    margin-top: 10px;
+  }
+
   #loginChart {
-    background-color: #fff;
+    background: var(--body-bg);
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .chart-module {
+      background: var(--body-bg);
+    }
+    
+    input[type="date"] {
+      background: var(--body-bg);
+      color: var(--body-fg);
+    }
   }
 </style>
 {% endblock %}
@@ -54,46 +138,66 @@
 
 {% if show_chart %}
 <div class="chart-module">
-  <h2 style="color: #417690;">所有使用者登入次數圖表</h2>
   <div class="chart-controls">
     <label for="startDate">開始日期：</label>
-    <input type="date" id="startDate" name="startDate">
+    <input type="date" id="startDate" name="startDate" class="vDateField">
     <label for="endDate">結束日期：</label>
-    <input type="date" id="endDate" name="endDate">
-    <button id="updateChart">更新圖表</button>
+    <input type="date" id="endDate" name="endDate" class="vDateField">
+    <button id="updateChart" class="default">更新圖表</button>
   </div>
-  <canvas id="loginChart" width="400" height="200"></canvas>
+  <div class="chart-container">
+    <canvas id="loginChart"></canvas>
+  </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+  // 初始化圖表變量和當前圖表資料
+  let chart;
+  let currentChartData = null; // 儲存當前圖表資料
+
   const loginChart = document.getElementById('loginChart');
   const startDateInput = document.getElementById('startDate');
   const endDateInput = document.getElementById('endDate');
   const updateChartButton = document.getElementById('updateChart');
 
-  // 設置默認日期範圍（一個月）
+  // 設定默認日期範圍（一個月）
   const today = new Date();
   const oneMonthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
   startDateInput.value = oneMonthAgo.toISOString().split('T')[0];
   endDateInput.value = today.toISOString().split('T')[0];
 
-  let chart;
+  // 檢測當前主題模式
+  function isDarkMode() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
 
-  function fetchChartData(startDate, endDate) {
-    const url = `chart-data/?start_date=${startDate}&end_date=${endDate}`;
-    return fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        return data;
-      })
-      .catch(error => {
-        console.error('Error fetching chart data:', error);
-        return [];
-      });
+  // 獲取主題顏色
+  function getThemeColors() {
+    const style = getComputedStyle(document.documentElement);
+    return {
+      textColor: style.getPropertyValue('--body-fg').trim(),
+      gridColor: isDarkMode() ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+      backgroundColor: style.getPropertyValue('--body-bg').trim()
+    };
+  }
+
+  function generateColors(count) {
+    // 柔和的現代配色方案
+    const baseColors = [
+      'rgba(100, 143, 255, 0.5)',  // 柔和的藍色
+      'rgba(255, 180, 100, 0.5)',  // 柔和的橙色
+      'rgba(120, 217, 159, 0.5)',  // 柔和的綠色
+      'rgba(255, 145, 156, 0.5)',  // 柔和的粉色
+      'rgba(180, 180, 255, 0.5)',  // 柔和的紫色
+      'rgba(145, 200, 220, 0.5)'   // 柔和的青色
+    ];
+    return Array.from({length: count}, (_, i) => baseColors[i % baseColors.length]);
   }
 
   function createChart(data) {
@@ -101,23 +205,16 @@ document.addEventListener('DOMContentLoaded', function() {
       chart.destroy();
     }
 
-    function generateColors(count) {
-      const baseColors = [
-        'rgba(75, 192, 192, 0.7)',
-        'rgba(255, 159, 64, 0.7)',
-        'rgba(54, 162, 235, 0.7)',
-        'rgba(153, 102, 255, 0.7)',
-        'rgba(255, 99, 132, 0.7)',
-        'rgba(201, 203, 207, 0.7)'
-      ];
-      return Array.from({length: count}, (_, i) => baseColors[i % baseColors.length]);
-    }
+    currentChartData = data; // 儲存當前圖表資料
+    const themeColors = getThemeColors();
+    
+    // 設定全局圖表樣式
+    Chart.defaults.color = themeColors.textColor;
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
 
     const users = [...new Set(data.map(item => item.username))];
     const userIDs = [...new Set(data.map(item => item.id))];
     const colors = generateColors(users.length);
-
-    // Create unique username by combining id and username
     const uniqueUsers = userIDs.map((id, index) => `[${id}] ${users[index]}`);
 
     const datasets = uniqueUsers.map((user, index) => {
@@ -126,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
         label: user,
         data: userLogins.map(item => ({ x: item.date, y: item.count })),
         borderColor: colors[index],
-        backgroundColor: colors[index].replace('0.7', '0.2'),
+        backgroundColor: colors[index],
         fill: true,
         tension: 0.4,
         pointRadius: 4,
@@ -139,6 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
       data: { datasets },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           x: {
             type: 'time',
@@ -148,86 +246,103 @@ document.addEventListener('DOMContentLoaded', function() {
                 day: 'yyyy/MM/dd'
               }
             },
+            grid: {
+              color: themeColors.gridColor,
+              drawBorder: false
+            },
+            border: {
+              color: themeColors.gridColor
+            },
+            ticks: {
+              color: themeColors.textColor,
+              font: {
+                size: 12
+              }
+            },
             title: {
               display: true,
               text: '日期',
-              color: '#666',
+              color: themeColors.textColor,
               font: {
-                size: 14,
-                weight: 'normal'
+                size: 13,
+                weight: '500'
               }
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
-            },
-            ticks: {
-              color: '#666'
             }
           },
           y: {
             beginAtZero: true,
+            grid: {
+              color: themeColors.gridColor,
+              drawBorder: false
+            },
+            border: {
+              color: themeColors.gridColor
+            },
             ticks: {
+              color: themeColors.textColor,
               stepSize: 1,
-              color: '#666'
+              font: {
+                size: 12
+              }
             },
             title: {
               display: true,
               text: '登入次數',
-              color: '#666',
+              color: themeColors.textColor,
               font: {
-                size: 14,
-                weight: 'normal'
+                size: 13,
+                weight: '500'
               }
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
             }
           }
         },
         plugins: {
-          legend: {
-            position: 'top',
-            labels: {
-              font: {
-                size: 12
-              },
-              usePointStyle: true,
-              pointStyle: 'circle',
-              color: '#666'
-            }
-          },
           title: {
             display: true,
             text: '所有使用者登入次數圖表',
-            color: '#417690',
+            color: themeColors.textColor,
             font: {
               size: 18,
-              weight: 'normal'
+              weight: '600'
             },
             padding: {
               top: 10,
               bottom: 30
             }
           },
+          legend: {
+            position: 'top',
+            labels: {
+              color: themeColors.textColor,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              padding: 15,
+              font: {
+                size: 12
+              }
+            }
+          },
           tooltip: {
             mode: 'index',
             intersect: false,
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            titleColor: '#333',
-            bodyColor: '#666',
-            borderColor: '#e1e1e1',
+            backgroundColor: themeColors.backgroundColor,
+            titleColor: themeColors.textColor,
+            bodyColor: themeColors.textColor,
+            borderColor: themeColors.gridColor,
             borderWidth: 1,
+            padding: 10,
             titleFont: {
-              size: 14,
-              weight: 'bold'
+              size: 13,
+              weight: '600'
             },
             bodyFont: {
               size: 12
             },
-            padding: 10,
             callbacks: {
-              title: function(tooltipItems) {
-                return new Date(tooltipItems[0].parsed.x).toLocaleDateString('zh-TW', {
+              title: function(context) {
+                // 自定義提示標題格式
+                const date = new Date(context[0].parsed.x);
+                return date.toLocaleDateString('zh-TW', {
                   year: 'numeric',
                   month: '2-digit',
                   day: '2-digit'
@@ -235,32 +350,39 @@ document.addEventListener('DOMContentLoaded', function() {
               }
             }
           }
-        },
-        interaction: {
-          mode: 'nearest',
-          axis: 'x',
-          intersect: false
-        },
-        animation: {
-          duration: 1000,
-          easing: 'easeOutQuart'
         }
       }
     });
   }
 
-  function updateChart() {
-    const startDate = startDateInput.value;
-    const endDate = endDateInput.value;
-    fetchChartData(startDate, endDate).then(createChart);
+
+  function fetchChartData(startDate, endDate) {
+    const url = `chart-data/?start_date=${startDate}&end_date=${endDate}`;
+    return fetch(url)
+      .then(response => response.json())
+      .catch(error => {
+        console.error('Error fetching chart data:', error);
+        return [];
+      });
   }
 
-  updateChartButton.addEventListener('click', updateChart);
+  updateChartButton.addEventListener('click', () => {
+    fetchChartData(startDateInput.value, endDateInput.value)
+      .then(data => {
+        currentChartData = data; // 更新儲存的圖表資料
+        createChart(data);
+      });
+  });
 
-  // 初始加載圖表
-  updateChart();
+  // 初始載入
+  fetchChartData(startDateInput.value, endDateInput.value)
+    .then(data => {
+      currentChartData = data; // 初始化儲存的圖表資料
+      createChart(data);
+    });
+
 });
+
 </script>
 {% endif %}
-
 {% endblock %}
