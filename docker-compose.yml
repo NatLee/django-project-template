@@ -9,26 +9,19 @@ x-common-restart:
   restart: always
 
 services:
-  backend-mariadb:
+  backend-postgres:
     <<: [ *restart, *networks ]
-    container_name: ${PROJECT_NAME}-mariadb
+    container_name: ${PROJECT_NAME}-postgres
+    hostname: ${PROJECT_NAME}-postgres
     platform: linux/amd64
-    image: mariadb:latest
+    image: postgres:latest
     environment:
-      - MYSQL_ROOT_HOST=%
-      - MYSQL_DATABASE=${DB_NAME}
-      - MYSQL_USER=${DB_USER}
-      - MYSQL_PASSWORD=${DB_USER_PASSWORD}
-      - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true
-    command: 
-      - --net_buffer_length=1048576
-      - --max_allowed_packet=1073741824
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --innodb-flush-log-at-trx-commit=0
-      #- --init_connect='SET NAMES utf8mb4;'
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_USER_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data
     volumes:
-      - ./backend-sql-data:/var/lib/mysql
+      - ./backend-db-data:/var/lib/postgresql/data
 
   backend-redis:
     <<: [ *restart, *networks ]
@@ -49,7 +42,7 @@ services:
       - ./backend:/app
       - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:rw
     depends_on:
-      - backend-mariadb
+      - backend-postgres
     command: bash docker-entrypoint.sh
     environment:
       - DEBUG=${DEBUG}

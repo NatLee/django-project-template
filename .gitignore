@@ -3,7 +3,7 @@
 
 log
 logs
-backend-sql-data/
+backend-db-data/
 .DS_Store
 desktop.ini
 00*_*.py

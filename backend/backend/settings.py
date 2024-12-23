@@ -3,14 +3,10 @@ from ast import literal_eval
 import os
 from pathlib import Path
 from datetime import timedelta
-import pymysql
 
 logger= logging.getLogger(__name__)
 
 print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
-
-pymysql.version_info = (1, 4, 13, "final", 0)  # 需自行新增
-pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -298,7 +294,7 @@ DB_USER = os.environ["DB_USER"]
 DB_HOST = os.environ["DB_HOST"]
 DB_PORT = os.environ["DB_PORT"]
 SQL = {
-    "ENGINE": "django.db.backends.mysql",
+    "ENGINE": "django.db.backends.postgresql",
     "NAME": DB_NAME,  # db name
     "USER": DB_USER,  # db user
     "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password

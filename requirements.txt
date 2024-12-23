@@ -6,21 +6,16 @@ numpy==1.26.4
 
 # Django
 Django==5.1.4
-
 # Django Packages
 django-cors-headers==3.11.0
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 django-simple-history==3.7.0
-
 django-allauth==64.0.0
-
 # Static files
 whitenoise==6.5.0
-
 # Redis
 django-redis==5.4.0
-
 # Admin panel customization
 django-import-export==4.1.1
 django-unfold==0.30.0
@@ -29,7 +24,7 @@ django-unfold==0.30.0
 drf-yasg==1.21.4
 
 # Database
-PyMySQL==1.0.2
+psycopg2-binary  # PostgreSQL adapter
 
 pyparsing==3.0.8
 
