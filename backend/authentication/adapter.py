@@ -80,7 +80,6 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
         # 檢查狀態：connect
         # ========================================
 
-        # 如果現在的process是connect，則不檢查 email
         if sociallogin.state.get('process') == 'connect':
 
             # 沒有登入的用戶是不能綁定社交帳號的
@@ -101,6 +100,12 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
                     # 提示用戶已經綁定了這個社交帳號
                     raise ImmediateHttpResponse(redirect('social-account-already-connected-by-self'))
 
+            # 檢查Email是否在白名單中
+            email = user_email(sociallogin.user)
+            if not self.is_email_valid(email):
+                # 直接重定向到錯誤頁面
+                raise ImmediateHttpResponse(redirect('invalid-email-domain'))
+
             return super().pre_social_login(request, sociallogin)
 
         # ========================================
@@ -115,15 +120,21 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
                 logger.warning(f"Duplicate email detected during social login: {email}")
                 # 直接重定向到錯誤頁面
                 raise ImmediateHttpResponse(redirect('duplicate-email'))
-            # Email 不存在，則檢查是否為有效的 email domain
-            email_domain = email.split('@')[1]
-            if email_domain not in settings.SOCIALACCOUNT_VALID_EMAIL_DOMAINS:
-                # Email domain 不在白名單中
-                logger.warning(f"Invalid email domain detected during social login: {email}")
-                # 直接重定向到錯誤頁面
+            if not self.is_email_valid(email):
                 raise ImmediateHttpResponse(redirect('invalid-email-domain'))
 
         return super().pre_social_login(request, sociallogin)
+
+    def is_email_valid(self, email:str) -> bool:
+        if not email:
+            logger.warning(f"Invalid email detected during social login: {email}")
+            return False
+        email_domain = email.split('@')[1]
+        if email_domain not in settings.SOCIALACCOUNT_VALID_EMAIL_DOMAINS:
+            # Email domain 不在白名單中
+            logger.warning(f"Invalid email domain detected during social login: {email}")
+            return False
+        return True
 
     def get_connect_redirect_url(self, request, socialaccount):
         # 處理社交帳號連接的重定向
