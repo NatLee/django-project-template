@@ -76,7 +76,10 @@ class SocialAccountListView(APIView):
 
         # 檢查用戶是否只有一個社交帳號
         if SocialAccount.objects.filter(user=user).count() == 1:
-            return Response({'error': '無法解除綁定最後一個社交帳號'}, status=status.HTTP_400_BAD_REQUEST)
+            # 檢查使用者是否有設定密碼
+            if not user.has_usable_password():
+                # 如果沒有設定密碼，則無法解除綁定
+                return Response({'error': '無法解除綁定最後一個社交帳號'}, status=status.HTTP_400_BAD_REQUEST)
 
         account.delete()
         return Response({'message': '社交帳號已成功解綁'}, status=status.HTTP_200_OK)
