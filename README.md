@@ -12,7 +12,7 @@ Please specify the required variables in `.env` for this project.
 
 - Docker
 - Backend -> Django 5
-- Database -> MariaDB
+- Database -> PostgreSQL
 - Load Balancer -> NGINX
 
 ## Other Features
@@ -38,7 +38,7 @@ docker-compose build && docker-compose up
 Clean up and rebuild.
 
 ```bash
-rm -rf backend-sql-data &&  docker-compose down -v && docker-compose build && docker-compose up
+rm -rf backend-db-data &&  docker-compose down -v && docker-compose build && docker-compose up
 ```
 
 ### 3rd Party Login
@@ -47,22 +47,24 @@ You can check the setting in [here](https://github.com/NatLee/Django-Simple-3rd-
 
 ## Misc
 
+> Ensure your environment is ready in `.env` file.
+
 - Create superuser
 
 ```bash
-bash dev-create-superuser.sh
+bash dev-tool.sh create-superuser
 ```
 
 - Enter Shell
 
 ```bash
-bash dev-shell.sh
+bash dev-tool.sh shell
 ```
 
 - Start New APP
 
 ```bash
-bash dev-startapp <YOUR_NEW_APP_NAME>
+bash dev-tool.sh django-startapp <YOUR_NEW_APP_NAME>
 ```
 
 ## Playground
