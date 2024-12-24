@@ -12,6 +12,11 @@ from django.conf import settings
 
 URL_PREFIX = 'api'
 
+# =================
+# Unregister Site in admin panel
+from django.contrib.sites.models import Site
+admin.site.unregister(Site)
+# =================
 
 urlpatterns = []
 
@@ -114,3 +119,5 @@ if settings.DEBUG:
 
     # add silk
     urlpatterns += [path(f"{URL_PREFIX}/silk/", include("silk.urls", namespace="silk"))]
+
+admin.autodiscover()
