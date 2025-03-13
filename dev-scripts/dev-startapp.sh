@@ -13,7 +13,7 @@ APP_NAME="$1"
 print_message "$BLUE" "Creating new Django app '${APP_NAME}' in ${CONTAINER_WEB_NAME}..."
 docker exec -it ${CONTAINER_WEB_NAME} bash -c "python manage.py startapp ${APP_NAME}"
 
-if [ ! -d "./src/${APP_NAME}" ]; then
+if [ ! -d "./backend/${APP_NAME}" ]; then
   print_message "$RED" "Error: Folder not created."
   exit 1
 fi
@@ -30,6 +30,6 @@ else
 fi
 
 # Ensure the current user has read and write permissions
-chmod -R u+rw "./src/${APP_NAME}"
+chmod -R u+rw "./backend/${APP_NAME}"
 
 print_message "$GREEN" "New Django app '${APP_NAME}' created successfully."
