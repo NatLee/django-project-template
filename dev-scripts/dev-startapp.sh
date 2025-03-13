@@ -23,10 +23,10 @@ print_message "$YELLOW" "Adjusting permissions for the new app folder..."
 # Check if we're on macOS
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # On macOS, we use the current user's UID and GID
-  docker exec -it ${CONTAINER_WEB_NAME} bash -c "chown -R $(id -u):$(id -g) /app/src/${APP_NAME}"
+  docker exec -it ${CONTAINER_WEB_NAME} bash -c "chown -R $(id -u):$(id -g) /src/${APP_NAME}"
 else
   # On Linux, we can use $USER
-  docker exec -it ${CONTAINER_WEB_NAME} bash -c "chown -R $USER:$USER /app/src/${APP_NAME}"
+  docker exec -it ${CONTAINER_WEB_NAME} bash -c "chown -R $USER:$USER /src/${APP_NAME}"
 fi
 
 # Ensure the current user has read and write permissions
