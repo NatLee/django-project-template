@@ -1,208 +1,90 @@
-import logging
-from ast import literal_eval
-import os
-from pathlib import Path
+"""Django settings for the template.
+
+Everything that changes between projects or environments is read from environment
+variables (Docker Compose loads them from `.env`). Defaults are safe for production:
+with DEBUG off you must provide SECRET_KEY and ALLOWED_HOSTS yourself.
+"""
+
 from datetime import timedelta
+from pathlib import Path
 
-logger= logging.getLogger(__name__)
+from django.core.exceptions import ImproperlyConfigured
 
-print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
+from backend.env import env_bool, env_int, env_list, env_str
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-print(f"---------- Project DIR: {BASE_DIR}")
+PROJECT_NAME = env_str("PROJECT_NAME", "django-project-template")
+DEBUG = env_bool("DEBUG", False)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-h0usnb4^27w+^)i*)f24$i3$$)(&1m@r0cj42wsi1n@0&+7@h)"
+# ------------------------------------------------------------------ security
+SECRET_KEY = env_str("SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "SECRET_KEY is required when DEBUG is off. Generate one with: "
+            "python -c \"import secrets; print(secrets.token_urlsafe(50))\""
+        )
+    # Only ever used in development; `manage.py check --deploy` flags it.
+    SECRET_KEY = "django-insecure-development-only-key-do-not-use-in-production"
 
-SITE_ID = 1
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "*" if DEBUG else "localhost,127.0.0.1")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
 
-# ----------------------------- START - DEBUG setting -------------------------------
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG')
-if DEBUG is None:
-    DEBUG = True
-else:
-    if isinstance(DEBUG, str):
-        DEBUG = literal_eval(DEBUG)
-    elif isinstance(DEBUG, bool):
-        pass
-print(f"---------- Debug mode: {DEBUG}")
-# ------------------------------ END - DEBUG setting --------------------------------
+# NGINX in front of Django sets X-Forwarded-Proto and the original Host header.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
-
-ALLOWED_HOSTS = ["*"]
-
-# -------------- START - CORS Setting --------------
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [
-    "http://*.127.0.0.1",
-    "http://localhost",
-]
-# -------------- END - CORS Setting -----------------
-
-# -------------- START - Auth Setting --------------
-
+# Cookies only travel over HTTPS in production. Turn SECURE_COOKIES off if you
+# run DEBUG=False on plain HTTP (for example a quick local check).
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = env_bool("SECURE_COOKIES", not DEBUG)
+SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", False)
+SECURE_HSTS_SECONDS = env_int("SECURE_HSTS_SECONDS", 0)
 SECURE_REFERRER_POLICY = "no-referrer-when-downgrade"
-# SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+# The social login runs in a popup window, so keep the opener relationship.
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
-LOGIN_REDIRECT_URL = "/"
+CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", DEBUG)
+CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS")
+CORS_ALLOW_CREDENTIALS = True
 
-
-# -------------- START - Allauth Setting --------------
-SOCIALACCOUNT_PROVIDERS = {}
-
-SOCIAL_GOOGLE_CLIENT_ID = os.environ.get("SOCIAL_GOOGLE_CLIENT_ID", None)
-SOCIAL_MICROSOFT_CLIENT_ID = os.environ.get("SOCIAL_MICROSOFT_CLIENT_ID", None)
-
-if SOCIAL_GOOGLE_CLIENT_ID:
-    print(f"---------- GOOGLE_CLIENT_ID: {SOCIAL_GOOGLE_CLIENT_ID}")
-    SOCIALACCOUNT_PROVIDERS['google'] = {
-        'APP': {
-            'client_id': SOCIAL_GOOGLE_CLIENT_ID,
-            'secret': os.environ.get("SOCIAL_GOOGLE_CLIENT_SECRET"),
-            'key': ''
-        }
-    }
-
-if SOCIAL_MICROSOFT_CLIENT_ID:
-    print(f"---------- MICROSOFT_CLIENT_ID: {SOCIAL_MICROSOFT_CLIENT_ID}")
-    SOCIALACCOUNT_PROVIDERS['microsoft'] = {
-        "APPS": [
-            {
-                "client_id": SOCIAL_MICROSOFT_CLIENT_ID,
-                "secret": os.environ.get("SOCIAL_MICROSOFT_CLIENT_SECRET"),
-                "settings": {
-                    "tenant": "common",
-                    # Optional: override URLs (use base URLs without path)
-                    "login_url": "https://login.microsoftonline.com",
-                    "graph_url": "https://graph.microsoft.com",
-                }
-            }
-        ]
-    }
-
-SOCIALACCOUNT_LOGIN_ON_GET=True # Allow login via GET request
-ACCOUNT_LOGOUT_ON_GET=True # Allow logout via GET request
-SOCIALACCOUNT_AUTO_SIGNUP = True
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_ADAPTER = 'authentication.adapter.MyAccountAdapter'
-SOCIALACCOUNT_ADAPTER = 'authentication.adapter.MySocialAccountAdapter'
-
-# ========================
-# Custom Allauth settings
-# ========================
-SOCIALACCOUNT_VALID_EMAIL_DOMAINS = [
-    'gmail.com',
-    'hotmail.com',
-]
-
-# --------------- END - Allauth Setting ----------------
-
-# Application definition
-
+# ------------------------------------------------------------------ apps
 INSTALLED_APPS = [
-    # ==================
-    # Websocket Pkgs
-    # ==================
+    # Websocket (daphne must come first so `runserver` speaks ASGI)
     "daphne",
     "channels",
-    "channels_redis",
-    # ==================
     # Django
-    # ==================
-    "django.contrib.sites", # Allauth pkg needs SITE_ID
+    "django.contrib.sites",  # allauth needs SITE_ID
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # ==================
-    # Third party pkgs
-    # ==================
-    "rest_framework", # API framework
-    "drf_yasg", # Swagger
-    "corsheaders", # CORS
-    "simple_history", # History
-    "django_q", # Schedule and async tasks
-    "import_export", # Import and export data
-    # ==================
-    # Allauth 3rd Party Account
-    # ==================
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    # ==================
-    # Allauth Providers
-    # ==================
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.microsoft',
-    # ==================
-    # Custom Apps
-    # ==================
-    # 複寫第三方登入驗證APP
-    "authentication",
-    # 複寫發JWT用的APP
-    "custom_jwt",
-    # 展示用的Dashboard
-    "dev_dashboard",
-    # API代理
-    "api_proxy",
-    # 記錄使用者登入紀錄
-    "django_login_history",
-    # 使用者額外資訊
-    "userprofile",
-    # ==================
-    # Test Apps
-    # ==================
-    "ping"
+    # Third-party
+    "rest_framework",  # API framework
+    "drf_yasg",  # Swagger / Redoc
+    "corsheaders",  # CORS
+    "simple_history",  # model change history
+    "django_q",  # background tasks (django-q2)
+    "import_export",  # import / export in the admin
+    # Social login
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.microsoft",
+    # Project apps
+    "authentication",  # social login adapter that hands out JWTs
+    "custom_jwt",  # JWT endpoints
+    "dev_dashboard",  # login playground (DEBUG only)
+    "api_proxy",  # forwards requests to another API
+    "django_login_history",  # who logged in, when and from where
+    "userprofile",  # extra fields for every user
+    "ping",  # websocket + background task examples (DEBUG only)
 ]
 
-SITE_ID = 1  # Make sure SITE_ID is set
-
-if DEBUG:
-    # ==================
-    # Debug Pkgs
-    # ==================
-    INSTALLED_APPS += [
-        "schema_graph", # Show visual schema graph
-        "django_cprofile_middleware",
-        "pyinstrument", # Show API performance
-        "silk", # Show request performance
-        "debug_toolbar", # SSR debug tool
-    ]
-    INTERNAL_IPS = [
-        '127.0.0.1',
-    ]
-
-    # this is the main reason for not showing up the toolbar
-    import mimetypes
-    mimetypes.add_type("application/javascript", ".js", True)
-
-    def show_toolbar(request):
-        return True
-
-    DEBUG_TOOLBAR_CONFIG = {
-        "SHOW_TOOLBAR_CALLBACK" : show_toolbar,
-    }
-
-
-ASGI_APPLICATION = "backend.asgi.application"
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("backend-redis", 6379)],
-        },
-    },
-}
-
+SITE_ID = 1
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -215,28 +97,41 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
-    # ==================
-    # All Auth Middleware
-    # ==================
     "allauth.account.middleware.AccountMiddleware",
-    # ==================
 ]
 
+# Debug tools are only installed when DEBUG is on. urls.py mounts each tool's
+# pages only when its app is installed.
 if DEBUG:
-    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
-
-    MIDDLEWARE += [
+    INSTALLED_APPS += [
+        "schema_graph",  # visual model graph
+        "django_cprofile_middleware",
+        "pyinstrument",  # add ?profile to a URL
+        "silk",  # request inspector
+        "debug_toolbar",
+    ]
+    MIDDLEWARE = [
+        "debug_toolbar.middleware.DebugToolbarMiddleware",
+        *MIDDLEWARE,
         "pyinstrument.middleware.ProfilerMiddleware",
         "silk.middleware.SilkyMiddleware",
         "django_cprofile_middleware.middleware.ProfilerMiddleware",
     ]
+    INTERNAL_IPS = ["127.0.0.1"]
+
+    def show_toolbar(request):
+        # Requests arrive through NGINX, so REMOTE_ADDR is never in INTERNAL_IPS.
+        return True
+
+    DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": show_toolbar, "SHOW_COLLAPSED": True}
 
 ROOT_URLCONF = "backend.urls"
+ASGI_APPLICATION = "backend.asgi.application"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates").replace("\\", "/")],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -244,263 +139,195 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "backend.context_processors.project",
             ],
         },
     },
 ]
 
-# -------------- START - Swagger Setting --------------
+# ------------------------------------------------------------------ database
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env_str("DB_NAME", required=True),
+        "USER": env_str("DB_USER", required=True),
+        "PASSWORD": env_str("DB_USER_PASSWORD", required=True),
+        "HOST": env_str("DB_HOST", "backend-postgres"),
+        "PORT": env_int("DB_PORT", 5432),
+    }
+}
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-USE_X_FORWARDED_HOST = True
+# ------------------------------------------------------------------ redis: cache + websocket layer
+REDIS_URL = env_str("REDIS_URL", "redis://backend-redis:6379/0")
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+    }
+}
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [REDIS_URL]},
+    }
+}
 
+# Page cache used by common.cache_deco.CacheDeco
+CACHE_PAGE = env_bool("CACHE_PAGE", False)
+CACHE_TTL = env_int("CACHE_TTL", 60 * 60)
+
+# ------------------------------------------------------------------ background tasks (django-q2)
+Q_CLUSTER = {
+    "name": "backend",
+    "workers": env_int("Q_WORKERS", 3),
+    "recycle": 500,
+    "retry": 3700,  # must be longer than timeout
+    "timeout": 3600,
+    "compress": True,
+    "save_limit": 250,
+    "queue_limit": 250,
+    "label": "Django Q",
+    "orm": "default",  # the database is the broker, no extra service needed
+    "max_attempts": 2,
+}
+
+# ------------------------------------------------------------------ auth
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+LOGIN_REDIRECT_URL = "/"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env_int("JWT_ACCESS_TOKEN_MINUTES", 3600)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=env_int("JWT_REFRESH_TOKEN_DAYS", 1)),
+}
+
+# ------------------------------------------------------------------ social login (django-allauth)
+# A provider is switched on by setting SOCIAL_<PROVIDER>_CLIENT_ID in .env.
+# Add a provider: add its allauth app to INSTALLED_APPS and a line here.
+SOCIAL_PROVIDER_SETTINGS = {
+    "google": {},
+    "microsoft": {"tenant": env_str("SOCIAL_MICROSOFT_TENANT", "common")},
+}
+SOCIALACCOUNT_PROVIDERS = {
+    provider: {
+        "APPS": [
+            {
+                "client_id": env_str(f"SOCIAL_{provider.upper()}_CLIENT_ID"),
+                "secret": env_str(f"SOCIAL_{provider.upper()}_CLIENT_SECRET"),
+                "settings": extra,
+            }
+        ]
+    }
+    for provider, extra in SOCIAL_PROVIDER_SETTINGS.items()
+    if env_str(f"SOCIAL_{provider.upper()}_CLIENT_ID")
+}
+# Only emails from these domains may sign up or connect. Empty means any domain.
+SOCIALACCOUNT_VALID_EMAIL_DOMAINS = env_list("SOCIALACCOUNT_VALID_EMAIL_DOMAINS", "gmail.com,hotmail.com")
+
+SOCIALACCOUNT_LOGIN_ON_GET = True  # the dashboard links straight to the provider
+SOCIALACCOUNT_AUTO_SIGNUP = True
+ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_LOGIN_METHODS = {"username"}  # same as the JWT and playground logins
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]  # social sign-ups fill these in automatically
+ACCOUNT_ADAPTER = "authentication.adapter.MyAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "authentication.adapter.MySocialAccountAdapter"
+
+# ------------------------------------------------------------------ API docs (drf-yasg)
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
-        "Token(add prefix `Bearer` yourself)": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header",
-        }
+        "Token(add prefix `Bearer` yourself)": {"type": "apiKey", "name": "Authorization", "in": "header"},
     },
     "LOGIN_URL": "/api/__hidden_dev_dashboard/login",
     "LOGOUT_URL": "/api/__hidden_admin/logout/?next=/api/__hidden_swagger",
 }
+SWAGGER_USE_COMPAT_RENDERERS = False  # formats are "json"/"yaml" without the dot (see urls.py)
 
-# --------------- END - Swagger Setting----------------
+# ------------------------------------------------------------------ API proxy
+API_URL = env_str("API_URL")  # e.g. http://my-other-service:9999/
+API_VERSION = env_str("API_VERSION", "v1")  # sent as the `version` header
+ROUTE_PATH = "proxy"  # /api/proxy/<resource> ...
+TARGET_PATH = "api"  # ... is forwarded to {API_URL}api/<resource>
+API_PROXY_TIMEOUT = env_int("API_PROXY_TIMEOUT", 180)
+API_PROXY_VERIFY_TLS = env_bool("API_PROXY_VERIFY_TLS", True)
 
+# ------------------------------------------------------------------ login history
+# "{ip}" is replaced by the address. Leave empty to skip the location lookup.
+LOGIN_HISTORY_GEOIP_URL = env_str("LOGIN_HISTORY_GEOIP_URL", "http://ip-api.com/json/{ip}")
+LOGIN_HISTORY_GEOIP_TIMEOUT = 5
+LOGIN_HISTORY_RETENTION_DAYS = env_int("LOGIN_HISTORY_RETENTION_DAYS", 90)
 
-# -------------- START - Database Setting --------------
-DB_NAME = os.environ["DB_NAME"]
-DB_USER = os.environ["DB_USER"]
-#DB_USER_PASSWORD = os.environ["DB_USER_PASSWORD"] # for security reasons
-DB_HOST = os.environ["DB_HOST"]
-DB_PORT = os.environ["DB_PORT"]
-SQL = {
-    "ENGINE": "django.db.backends.postgresql",
-    "NAME": DB_NAME,  # db name
-    "USER": DB_USER,  # db user
-    "PASSWORD": os.environ["DB_USER_PASSWORD"],  # db password
-    "HOST": DB_HOST,  # db host
-    "PORT": DB_PORT,  # db port
-}
-DATABASES = {"default": SQL, "OPTIONS": {"protocol": "TCP"}}
-print(f"---------- MYSQL: {DB_NAME} -> {DB_USER}@{DB_HOST}:{DB_PORT}")
-# -------------- END - Database Setting --------------
-
-
-
-# Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
-
-from django.conf.locale.en import formats as en_formats
-en_formats.DATETIME_FORMAT = "Y/m/d H:i:s"
-
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Asia/Taipei"
+# ------------------------------------------------------------------ i18n
+LANGUAGE_CODE = env_str("LANGUAGE_CODE", "en-us")
+TIME_ZONE = env_str("TIME_ZONE", "Asia/Taipei")
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
+FORMAT_MODULE_PATH = ["backend.formats"]  # 2026/11/04 13:45:00 style dates
 APPEND_SLASH = False
 
-# Static files (CSS, JavaScript, Images)
+# ------------------------------------------------------------------ static files
 STATIC_URL = "api/__hidden_statics/"
-STATIC_ROOT = "staticfiles"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Default primary key field type
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# -------------- START - Log setting --------------
-LOG_ROOT = Path(BASE_DIR) / 'logs'
-LOG_ROOT.mkdir(exist_ok=True)
-
-LOG_TYPES = {
-    'file': 'standard',
-    'database': 'standard',
-    'api': 'api-format',
-    'auth': 'standard',
+# ------------------------------------------------------------------ logging
+# Each category below gets its own folder under LOG_DIR with hourly rotated files,
+# one file per level. loguru also prints these records to the console, so they
+# show up in `docker compose logs`. Everything else goes to the console at WARNING.
+LOG_DIR = Path(env_str("LOG_DIR", str(BASE_DIR / "logs")))
+# Level for the project's own loggers; Django itself logs at INFO.
+LOG_LEVEL = env_str("LOG_LEVEL", "DEBUG" if DEBUG else "INFO")
+LOG_CATEGORIES = {
+    # category: (formatter, level, loggers that write to it)
+    "file": ("standard", "INFO", ["django"]),
+    "database": ("standard", "INFO", ["django.db.backends"]),  # DEBUG here logs every SQL query
+    "api": ("api-format", LOG_LEVEL, ["api_proxy"]),
+    "auth": ("standard", LOG_LEVEL, ["authentication", "custom_jwt", "django_login_history"]),
 }
-
-FORMATTERS = {
-    'standard': {
-        'format': '[%(asctime)s] [%(filename)s:%(lineno)d] [%(module)s:%(funcName)s] [%(levelname)s] - %(message)s'
-    },
-    "simple": {
-        "format": "%(levelname)s %(message)s"
-    },
-    "api-format": {
-        "format": "[%(asctime)s] [%(funcName)s:%(lineno)d] [%(levelname)s] - %(message)s"
-    },
-}
-
-for log_type in LOG_TYPES.keys():
-    log_type_path = Path(BASE_DIR) / 'logs' / log_type
-    log_type_path.mkdir(exist_ok=True)
-
-HANDLERS = {}
-
-for log_type, formatter in LOG_TYPES.items():
-    HANDLERS[log_type] = {
-        'class': 'common.log.InterceptTimedRotatingFileHandler',
-        'filename': f"{LOG_ROOT / log_type / f'{log_type}.log'}",
-        'when': "H",
-        'interval': 1,
-        'backupCount': 1,
-        'formatter': formatter,
-        'encoding': 'utf-8',
-    }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': FORMATTERS,
-    'filters': {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "[%(asctime)s] [%(filename)s:%(lineno)d] [%(module)s:%(funcName)s] [%(levelname)s] - %(message)s"
+        },
+        "simple": {"format": "%(levelname)s %(message)s"},
+        "api-format": {"format": "[%(asctime)s] [%(funcName)s:%(lineno)d] [%(levelname)s] - %(message)s"},
     },
-    'handlers': HANDLERS,
-    'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'propagate': True,
-            'level': "INFO"
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "standard"},
+        **{
+            category: {
+                "class": "common.log.InterceptTimedRotatingFileHandler",
+                "filename": str(LOG_DIR / category / f"{category}.log"),
+                "when": "H",
+                "interval": 1,
+                "backupCount": 1,
+                "formatter": formatter,
+                "encoding": "utf-8",
+            }
+            for category, (formatter, _, _) in LOG_CATEGORIES.items()
         },
-        'django.request': {
-            'handlers': ['file'],
-            'propagate': False,
-            'level': "DEBUG"
-        },
-        "custom_auth": {
-            "handlers": ["auth"],
-            "propagate": False,
-            "level": "DEBUG"
-        },
-        # JWT相關
-        "custom_jwt": {
-            "handlers": ["auth"],
-            "propagate": False,
-            "level": "DEBUG"
-        },
-    }
+    },
+    "root": {"handlers": ["console"], "level": "WARNING"},
+    "loggers": {
+        name: {"handlers": [category], "level": level, "propagate": False}
+        for category, (_, level, names) in LOG_CATEGORIES.items()
+        for name in names
+    },
 }
-
-
-# --------------- END - Log setting ---------------
-
-
-# ---------------------------- START - REST_FRAMEWORK setting --------------------------
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        # 支援使用simplejwt的JWT登入
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        # 支援一般session進行後台登入
-        "rest_framework.authentication.SessionAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": (
-        # restframework的API必須登入才可使用
-        "rest_framework.permissions.IsAuthenticated",
-    ),
-    # 使用JSON來render API而非HTML界面
-    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
-}
-# ----------------------------- END - REST_FRAMEWORK setting ----------------------------
-
-
-
-# -------------- Start - SimpleJWT Setting --------------
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=3600),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
-    "UPDATE_LAST_LOGIN": False,
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
-    "VERIFYING_KEY": None,
-    "AUDIENCE": None,
-    "ISSUER": None,
-    "JWK_URL": None,
-    "LEEWAY": 0,
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
-    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "TOKEN_TYPE_CLAIM": "token_type",
-    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
-    "JTI_CLAIM": "jti",
-    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
-    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
-}
-# -------------- END - SimpleJWT Setting --------------
-
-
-# -------------- START - APIProxy Setting --------------
-API_URL = os.environ.get("API_URL")
-API_VERSION = os.environ.get("API_VERSION")
-ROUTE_PATH='proxy' # default route
-TARGET_PATH='api' # target route path
-print(f"---------- API Proxy: {TARGET_PATH} -> {ROUTE_PATH}")
-# -------------- END - APIProxy Setting --------------
-
-
-# -------------- START - Redis Setting --------------
-REDIS_PORT = 6379
-REDIS_HOST = "redis://backend-redis"
-CACHES = { # Redis cache
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"{REDIS_HOST}:{REDIS_PORT}/0",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
-    }
-}
-print(f"---------- REDIS: {REDIS_HOST}:{REDIS_PORT}")
-
-# -------------- END - Redis Setting --------------
-
-# -------------- Start - Django Q --------------
-Q_CLUSTER = {
-    'name': 'backend',
-    'workers': 3,
-    'recycle': 500,
-    'retry': 3700,
-    'timeout': 3600,
-    'compress': True,
-    'save_limit': 250,
-    'queue_limit': 250,
-    # 'cpu_affinity': 1,
-    'label': 'Django Q',
-    'orm': 'default',
-    'max_attempts': 2
-}
-# -------------- END - Django Q --------------
-
-
-
-# -------------- START - Cache Page Setting --------------
-CACHE_PAGE = False
-CACHE_TTL = 60 * 60
-print(f"---------- CACHE PAGE: {CACHE_PAGE}")
-print(f"---------- CACHE TTL: {CACHE_TTL} sec(s)")
-# -------------- END - Cache Page Setting --------------
-
-print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
