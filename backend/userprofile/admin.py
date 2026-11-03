@@ -1,11 +1,14 @@
 from django.contrib import admin
-
-# Register your models here.
+from import_export.admin import ImportExportModelAdmin
+from simple_history.admin import SimpleHistoryAdmin
 
 from userprofile.models import UserProfile
 
 
 @admin.register(UserProfile)
-class UserProfile_(admin.ModelAdmin):
+class UserProfileAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    """Import/export buttons (django-import-export) and a change history (django-simple-history)."""
 
     list_display = ("user", "displayname", "description")
+    list_select_related = ("user",)
+    search_fields = ("user__username", "displayname")

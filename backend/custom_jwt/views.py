@@ -1,27 +1,19 @@
-from django.shortcuts import render
+"""JWT endpoints that answer with `access_token` / `refresh_token` keys (plus the username on login)."""
 
-# Create your views here.
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+# SimpleJWT key -> key this API returns
+RENAMED_KEYS = {"access": "access_token", "refresh": "refresh_token"}
 
 
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
-
-from rest_framework_simplejwt.serializers import TokenRefreshSerializer
-from rest_framework_simplejwt.views import TokenRefreshView
+def rename_token_keys(data: dict) -> dict:
+    return {RENAMED_KEYS.get(key, key): value for key, value in data.items()}
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        data = super().validate(attrs)
-        refresh = self.get_token(self.user)
-        # data["refresh"] = str(refresh)
-        # data["access"] = str(refresh.access_token)
-        data["refresh_token"] = str(refresh)
-        data["access_token"] = str(refresh.access_token)
-        del data["access"]
-        del data["refresh"]
-
-        # Add extra responses here
+        data = rename_token_keys(super().validate(attrs))
         data["username"] = self.user.username
         return data
 
@@ -32,10 +24,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
 class MyTokenRefreshSerializer(TokenRefreshSerializer):
     def validate(self, attrs):
-        data = super().validate(attrs)
-        data["access_token"] = data.get("access")
-        del data["access"]
-        return data
+        return rename_token_keys(super().validate(attrs))
 
 
 class MyTokenRefreshView(TokenRefreshView):
