@@ -150,7 +150,7 @@ Rebuild from scratch, including the database: `docker compose down -v && docker 
 
 ## Tests and CI
 
-`bash dev-tool.sh test` runs the suite (about 110 tests) against the real PostgreSQL and Redis containers: settings parsing, production defaults, JWT, the social login rules, the popup pages, websockets through the ASGI app and Redis, background tasks, the admin pages, login history, the API proxy and the health check.
+`bash dev-tool.sh test` runs the suite (106 tests) against the real PostgreSQL and Redis containers: settings parsing, production defaults, JWT, the social login rules, the popup pages, websockets through the ASGI app and Redis, background tasks, the admin pages, login history, the API proxy and the health check.
 
 [CI](.github/workflows/ci.yml) goes further. It copies the repo the way **Use this template** does, renames it to `acme-shop` through `.env` only, builds and starts the stack, checks that no migration is missing, runs the tests, and then runs end-to-end tests through NGINX: JWT login, a websocket round trip, a task picked up by the real worker, static files and API docs. Finally it switches the copy to `DEBUG=false` and checks that daphne serves, `check --deploy` passes and the development pages are gone.
 
