@@ -1,29 +1,22 @@
-FROM python:3.12.4-slim-bullseye
+FROM python:3.14-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# curl for the container health check; procps and ping for debugging inside the container
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl procps iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY ./backend /app
-COPY ./requirements.txt /app
 
-# For debugging purposes ------------------------
-RUN apt-get update
-RUN apt-get install -y -qq iputils-ping procps
-RUN apt-get install -y -qq curl
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
 
-# Add graphviz ----------------------------------
-RUN apt-get install -y gcc
-RUN apt-get install -y libgraphviz-dev
-RUN apt-get install -y graphviz
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY backend /app
 
-# Install dependencies ---------------------------
-RUN python -m pip install --upgrade pip
-RUN pip install --upgrade setuptools
-RUN pip install -r requirements.txt
-
-# Add entrypoint script --------------------------
-RUN chmod a+x docker-entrypoint.sh
-
-# Add docker-compose-wait tool -------------------
-ENV WAIT_VERSION=2.12.1
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERSION/wait /wait
-RUN chmod +x /wait
-
+EXPOSE 8000
+CMD ["bash", "docker-entrypoint.sh"]
