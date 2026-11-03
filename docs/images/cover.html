@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>django-project-template cover</title>
+<!-- Render: msedge --headless=new --window-size=1280,640 --screenshot=cover.png cover.html -->
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    width: 1280px; height: 640px; overflow: hidden;
+    background: radial-gradient(circle at 85% 15%, #164a37 0%, #0d1a15 55%, #0a120f 100%);
+    color: #e9f1ed; font-family: "Segoe UI", system-ui, sans-serif;
+  }
+  .wrap { display: grid; grid-template-columns: 560px 1fr; gap: 40px; padding: 70px 64px; height: 100%; }
+  .eyebrow { display: inline-flex; gap: 8px; align-items: center; font: 600 18px/1 "Cascadia Code", Consolas, monospace; color: #6fdcaf; letter-spacing: 0.02em; }
+  .eyebrow b { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: #3fbf8f; color: #08130e; font-size: 15px; }
+  h1 { margin-top: 26px; font-size: 62px; line-height: 1.02; letter-spacing: -0.02em; font-weight: 750; }
+  h1 span { color: #6fdcaf; }
+  p.lead { margin-top: 22px; font-size: 25px; line-height: 1.4; color: #b4c7be; }
+  .cmd {
+    margin-top: 34px; display: inline-block; padding: 14px 20px; border-radius: 12px;
+    background: #050b08; border: 1px solid #23453a; font: 19px/1.4 "Cascadia Code", Consolas, monospace; color: #d6e6de; white-space: nowrap;
+  }
+  .cmd i { color: #6fdcaf; font-style: normal; }
+  .tags { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .tags span { padding: 7px 14px; border-radius: 999px; background: #15291f; border: 1px solid #23453a; font-size: 17px; color: #cfe2d8; }
+
+  /* architecture motif */
+  .stack { position: relative; margin-top: 14px; }
+  .box {
+    position: absolute; border-radius: 14px; padding: 16px 18px; background: #112019; border: 1.5px solid #2c5a49;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  }
+  .box h3 { font-size: 22px; font-weight: 700; }
+  .box small { display: block; margin-top: 4px; font-size: 15.5px; color: #94b2a5; }
+  .box.main { border-color: #3fbf8f; background: #13281f; }
+  .nginx { left: 0; top: 0; width: 552px; }
+  .django { left: 0; top: 128px; width: 552px; height: 192px; }
+  .django .row { display: flex; gap: 12px; margin-top: 14px; }
+  .django .row div { flex: 1; padding: 11px 13px; border-radius: 10px; background: #0b1611; border: 1px solid #2c5a49; font-size: 16px; color: #cfe2d8; }
+  .django .row b { display: block; font-size: 17px; color: #e9f1ed; margin-bottom: 3px; }
+  .pg { left: 0; top: 378px; width: 266px; }
+  .redis { left: 286px; top: 378px; width: 266px; }
+  .arrow { position: absolute; width: 2px; background: #3fbf8f; }
+  .arrow::after { content: ""; position: absolute; left: -6px; bottom: -2px; border: 7px solid transparent; border-top: 10px solid #3fbf8f; }
+  .a1 { left: 275px; top: 92px; height: 30px; }
+  .a2 { left: 132px; top: 330px; height: 40px; }
+  .a3 { left: 418px; top: 330px; height: 40px; }
+  .pill { display: inline-block; margin-left: 8px; padding: 2px 9px; border-radius: 999px; background: #1d3d30; color: #6fdcaf; font-size: 13px; font-weight: 600; vertical-align: 3px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div>
+      <div class="eyebrow"><b>dj</b> Django project template</div>
+      <h1>Start a Django<br>backend <span>already<br>wired up.</span></h1>
+      <p class="lead">Login, JWT, websockets and background tasks: running, tested in CI, configured from one <code>.env</code>.</p>
+      <div class="cmd"><i>$</i> cp .env.example .env &amp;&amp; docker compose up</div>
+    </div>
+    <div class="stack">
+      <div class="box nginx"><h3>NGINX <span class="pill">:5566</span></h3><small>/ frontend · /api Django · /ws websockets</small></div>
+      <div class="arrow a1"></div>
+      <div class="box main django">
+        <h3>Django 6.1 <span class="pill">supervisor</span></h3>
+        <small>runserver or daphne, plus the task worker</small>
+        <div class="row">
+          <div><b>REST + JWT</b>social login</div>
+          <div><b>Channels</b>websockets</div>
+          <div><b>django-q2</b>background tasks</div>
+        </div>
+      </div>
+      <div class="arrow a2"></div>
+      <div class="arrow a3"></div>
+      <div class="box pg"><h3>PostgreSQL 18</h3><small>data + task queue</small></div>
+      <div class="box redis"><h3>Redis 8</h3><small>cache + channel layer</small></div>
+    </div>
+  </div>
+</body>
+</html>
