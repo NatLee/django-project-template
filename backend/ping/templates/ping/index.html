@@ -1,0 +1,36 @@
+{% extends "dev_dashboard/layout.html" %}
+{% load static %}
+{% block title %}WebSocket &amp; tasks{% endblock %}
+{% block content %}
+<main class="page" id="ping" data-ws-path="/ws/ping/"
+      data-job-url="{% url 'ping-job' %}" data-progress-url="{% url 'ping-progress' task_id='TASK_ID' %}">
+  <div class="page-head">
+    <h1>WebSocket &amp; background tasks</h1>
+    <p>Messages go through Django Channels and Redis; tasks go through the django-q2 worker. Open this page in two tabs to see the broadcast.</p>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>WebSocket <span class="pill wait" id="ws-status">connecting</span></h2>
+      <div class="log" id="ws-log" aria-live="polite"></div>
+      <div class="actions">
+        <button class="btn primary" type="button" id="ws-send">Send message</button>
+        <button class="btn" type="button" id="ws-toggle">Disconnect</button>
+      </div>
+      <p class="hint">Endpoint <code id="ws-url"></code></p>
+    </section>
+
+    <section class="card">
+      <h2>Background task <span class="pill" id="task-status">idle</span></h2>
+      <p class="muted">Queues <code>ping.task.ping_job</code>, then polls its progress every second until the worker finishes it.</p>
+      <dl class="kv">
+        <dt>Task id</dt><dd id="task-id">-</dd>
+        <dt>Result</dt><dd id="task-result">-</dd>
+        <dt>Took</dt><dd id="task-time">-</dd>
+      </dl>
+      <div class="actions" style="margin-top:14px"><button class="btn primary" type="button" id="task-run">Run a task</button></div>
+    </section>
+  </div>
+</main>
+<script src="{% static 'js/ping.js' %}"></script>
+{% endblock %}

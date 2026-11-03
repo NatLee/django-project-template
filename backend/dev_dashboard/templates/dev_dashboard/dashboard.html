@@ -1,0 +1,87 @@
+{% extends "dev_dashboard/layout.html" %}
+{% load static socialaccount %}
+{% block title %}Login playground{% endblock %}
+{% block content %}
+<main class="page" id="dashboard"
+      data-token-refresh-url="{% url 'token_refresh' %}"
+      data-token-verify-url="{% url 'token_verify' %}"
+      data-social-accounts-url="{% url 'social-account-list' %}">
+  <div class="page-head">
+    <h1>Login playground</h1>
+    <p>Try session login, JWT and social login against this backend. Only available while <code>DEBUG</code> is on.</p>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Session
+        {% if request.user.is_authenticated %}<span class="pill ok">signed in</span>{% else %}<span class="pill">signed out</span>{% endif %}
+      </h2>
+      {% if request.user.is_authenticated %}
+        <p>Signed in as <strong>{{ request.user }}</strong>. The admin, Swagger and Redoc use this session.</p>
+        <div class="actions"><a class="btn" href="{% url 'dev-session-logout' %}">Sign out</a></div>
+      {% else %}
+        <p class="muted">No session yet. Sign in with a username and password, or create one with <code>bash dev-tool.sh create-superuser</code>.</p>
+        <div class="actions"><a class="btn primary" href="{% url 'dev-login' %}">Sign in</a></div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>JWT <span class="pill" id="jwt-status">checking…</span></h2>
+      <p class="token" id="token">No token stored in this browser.</p>
+      <p class="hint" id="jwt-result"></p>
+      <div class="actions">
+        <button class="btn" type="button" id="jwt-refresh">Refresh token</button>
+        <button class="btn danger" type="button" id="jwt-clear">Forget token</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Social login</h2>
+      {% if configured_providers %}
+        <p class="muted">Opens the provider in a popup. A first login creates the user; “Connect” links the account to the user signed in above.</p>
+        <ul class="list">
+          {% for provider in configured_providers %}
+          <li>
+            <strong>{{ provider.name }}</strong>
+            <span class="actions">
+              <a class="btn primary small social-popup" href="{% provider_login_url provider.id process='login' %}">Sign in</a>
+              <a class="btn small social-popup" href="{% provider_login_url provider.id process='connect' %}">Connect</a>
+            </span>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="note info">No provider configured yet. Set <code>SOCIAL_GOOGLE_CLIENT_ID</code> or <code>SOCIAL_MICROSOFT_CLIENT_ID</code> (and the secret) in <code>.env</code>, then restart.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Linked accounts <span class="pill" id="accounts-count">–</span></h2>
+      <ul class="list" id="social-accounts"><li class="muted">Sign in with a JWT to see linked accounts.</li></ul>
+    </section>
+
+    <section class="card">
+      <h2>Client IDs</h2>
+      <dl class="kv">
+        {% for provider in providers %}
+          <dt>{{ provider.name }}</dt>
+          <dd>{{ provider.client_id|default:"not set" }}</dd>
+        {% endfor %}
+      </dl>
+      <p class="hint">Register <code>{{ request.scheme }}://{{ request.get_host }}/api/allauth/&lt;provider&gt;/login/callback/</code> as the redirect URI.</p>
+    </section>
+
+    <section class="card">
+      <h2>Tools</h2>
+      <ul class="list links">
+        <li><a href="{% url 'health' %}">Health check</a><span class="hint">database + Redis</span></li>
+        <li><a href="{% url 'ping-index' %}">WebSocket &amp; background tasks</a><span class="hint">Channels, django-q2</span></li>
+        <li><a href="{% url 'admin:index' %}">Admin</a><span class="hint">login history chart</span></li>
+        <li><span><a href="{% url 'schema-swagger-ui' %}">Swagger</a> · <a href="{% url 'schema-redoc' %}">Redoc</a></span><span class="hint">staff only</span></li>
+        <li><span><a href="{% url 'silk:summary' %}">Silk</a> · <a href="{% url 'schema-graph' %}">Model graph</a></span><span class="hint">profiling, schema</span></li>
+      </ul>
+    </section>
+  </div>
+</main>
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

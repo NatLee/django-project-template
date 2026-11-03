@@ -1,30 +1,23 @@
-from typing import Dict, Any, Optional
-from datetime import timedelta
+import logging
+from datetime import date, timedelta
 
-from django.utils import timezone
-from django.contrib.auth.signals import user_logged_in
-from django.dispatch import receiver
-
-from django.db import models
-from django.db import transaction
-from django.db.models import Count
-
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-
-import requests
-from requests.exceptions import RequestException
+from django.contrib.auth.signals import user_logged_in
+from django.db import models
+from django.db.models import Count
+from django.db.models.functions import TruncDate
+from django.dispatch import receiver
+from django.utils import timezone
+from django_q.tasks import async_task
 
 from django_login_history.utils.get_client_ip import get_client_ip
 
-import logging
-
 logger = logging.getLogger(__name__)
 
-User = get_user_model()
 
 class Login(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="使用者")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="使用者")
     ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP位址")
     user_agent = models.TextField(verbose_name="使用者代理")
     date = models.DateTimeField(auto_now_add=True, verbose_name="登入時間")
@@ -37,103 +30,55 @@ class Login(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['user', 'date']),
-            models.Index(fields=['ip']),
+            models.Index(fields=["user", "date"]),
+            models.Index(fields=["ip"]),
         ]
         verbose_name = "登入記錄（Login History）"
         verbose_name_plural = "登入記錄（Login History）"
 
     @classmethod
-    def cleanup_old_records(cls):
-        # 刪除90天前的記錄
-        days_ago = timezone.now() - timedelta(days=90)
-        cls.objects.filter(date__lt=days_ago).delete()
+    def cleanup_old_records(cls) -> int:
+        """Delete records older than LOGIN_HISTORY_RETENTION_DAYS; returns how many were deleted."""
+        cutoff = timezone.now() - timedelta(days=settings.LOGIN_HISTORY_RETENTION_DAYS)
+        deleted, _ = cls.objects.filter(date__lt=cutoff).delete()
+        return deleted
 
     @classmethod
-    def get_all_users_login_count_by_date_range(cls, start_date, end_date):
-        start_date = timezone.datetime.strptime(start_date, '%Y-%m-%d').date()
-        end_date = timezone.datetime.strptime(end_date, '%Y-%m-%d').date()
+    def get_all_users_login_count_by_date_range(cls, start_date: str, end_date: str) -> list[dict]:
+        """One row per user per day between two YYYY-MM-DD dates (inclusive), with that day's login count.
 
-        # 獲取所有用戶
-        all_users = User.objects.all()
-
-        # 獲取指定日期範圍的登錄資料
-        queryset = cls.objects.filter(date__date__gte=start_date, date__date__lte=end_date) \
-            .values('user__pk', 'user__username') \
-            .annotate(date=models.functions.TruncDate('date', tzinfo=timezone.get_current_timezone())) \
-            .annotate(count=Count('id')) \
-            .order_by('user__username', 'date')
-
-        # 將查詢結果轉換為字典，方便後續處理
-        login_data = {
-            (item['user__pk'], item['date'].strftime('%Y-%m-%d')): item['count']
-            for item in queryset
+        Raises ValueError when a date is not in YYYY-MM-DD form.
+        """
+        start_date, end_date = date.fromisoformat(start_date), date.fromisoformat(end_date)
+        counts = {
+            (row["user__pk"], row["day"]): row["count"]
+            for row in cls.objects.filter(date__date__gte=start_date, date__date__lte=end_date)
+            .annotate(day=TruncDate("date", tzinfo=timezone.get_current_timezone()))
+            .values("user__pk", "day")
+            .annotate(count=Count("id"))
         }
+        days = [start_date + timedelta(n) for n in range((end_date - start_date).days + 1)]
 
         result = []
-        for user in all_users:
-            user_data = []
-            for day in (start_date + timedelta(n) for n in range((end_date - start_date).days + 1)):
-                date_str = day.strftime('%Y-%m-%d')
-                count = login_data.get((user.pk, date_str), 0)
-                username = user.username
-                userprofile = getattr(user, 'userprofile', None)
-                displayname = None
-                if userprofile:
-                    displayname = getattr(userprofile, 'displayname', None)
-                if displayname:
-                    username = f'[{user.username}]{user.userprofile.displayname}'
-                user_data.append({
-                    'id': user.pk,
-                    'username': username,
-                    'date': date_str,
-                    'count': count
-                })
-            result.extend(user_data)
-
+        for user in get_user_model().objects.select_related("userprofile").order_by("username"):
+            profile = getattr(user, "userprofile", None)
+            displayname = getattr(profile, "displayname", "")
+            label = f"[{user.username}]{displayname}" if displayname else user.username
+            for day in days:
+                result.append(
+                    {"id": user.pk, "username": label, "date": day.isoformat(), "count": counts.get((user.pk, day), 0)}
+                )
         return result
 
 
-
-def get_location_data_from_ip(ip: Optional[str]) -> Dict[str, Any]:
-    if ip is None:
-        return {}
-
-    url = f"http://ip-api.com/json/{ip}"
-    try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        if data.get('status') == 'success':
-            return {
-                'country': data.get('country', ''),
-                'region': data.get('regionName', ''),
-                'city': data.get('city', '')
-            }
-        else:
-            logger.warning(f"IP API returned non-success status for IP: {ip}")
-            return {}
-    except RequestException as e:
-        logger.error(f"Error getting location data for IP {ip}: {e}")
-        return {}
-
 @receiver(user_logged_in)
 def post_login(sender, user, request, **kwargs):
-    ip = get_client_ip(request)
-    location_info = get_location_data_from_ip(ip)
-
-    try:
-        with transaction.atomic():
-            login = Login.objects.create(
-                user=user,
-                ip=ip,
-                user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                country=location_info.get('country', ''),
-                region=location_info.get('region', ''),
-                city=location_info.get('city', ''),
-            )
-        logger.info(f"Login recorded: {login}")
-    except ValidationError as e:
-        logger.error(f"Error creating login record: {e}")
-    except Exception as e:
-        logger.exception(f"Unexpected error creating login record: {e}")
+    """Record every login. The location lookup runs in the background so login stays fast."""
+    login = Login.objects.create(
+        user=user,
+        ip=get_client_ip(request),
+        user_agent=request.META.get("HTTP_USER_AGENT", ""),
+    )
+    logger.info("Login recorded: %s", login)
+    if login.ip and settings.LOGIN_HISTORY_GEOIP_URL:
+        async_task("django_login_history.tasks.fill_location", login.pk)

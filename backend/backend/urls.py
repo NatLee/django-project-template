@@ -1,123 +1,82 @@
+from django.apps import apps
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
-from django.urls import include, re_path
-
-from drf_yasg.views import get_schema_view
+from django.contrib.sites.models import Site
+from django.urls import include, path, re_path
 from drf_yasg import openapi
 from drf_yasg.generators import OpenAPISchemaGenerator
+from drf_yasg.views import get_schema_view
+from rest_framework.permissions import IsAdminUser
 
-from rest_framework.permissions import AllowAny, IsAdminUser
+from backend.health import health
 
-from django.conf import settings
+# NGINX forwards everything under /api to Django (see nginx/default.conf).
+URL_PREFIX = "api"
 
-URL_PREFIX = 'api'
-
-# =================
-# Unregister Site in admin panel
-from django.contrib.sites.models import Site
+# The admin shows the project name from .env instead of "Django administration".
+admin.site.site_header = admin.site.site_title = f"{settings.PROJECT_NAME} admin"
+# allauth needs the Sites framework, but nobody needs to edit it in the admin.
 admin.site.unregister(Site)
-# =================
 
-urlpatterns = []
-
-# ============
-# Debug Pages
-# ============
-if settings.DEBUG:
-    urlpatterns += [
-        # admin
-        path(f"{URL_PREFIX}/__hidden_admin/", admin.site.urls),
-        # debug dashboard
-        path(f"{URL_PREFIX}/__hidden_dev_dashboard", include("dev_dashboard.urls")),
-        # example - ping
-        path(f"{URL_PREFIX}/ping", include("ping.urls"), name="ping"),
-    ]
-
-# ============
-# Auth
-# ============
-urlpatterns += [
-    # ============
-    # Custom Allauth
-    # ============
-    path('api/allauth/', include('authentication.urls')),
-    # ============
-    # Custom Simple JWT
-    # ============
+urlpatterns = [
+    path(f"{URL_PREFIX}/health", health, name="health"),
+    # Social login (allauth) plus our JWT hand-off pages
+    path(f"{URL_PREFIX}/allauth/", include("authentication.urls")),
+    # JWT endpoints
     path(f"{URL_PREFIX}/auth/", include("custom_jwt.urls")),
-]
-
-# =================
-# Custom APP route
-# =================
-urlpatterns += [
-    # ============
-    # 代理其他API的路由
-    # ============
+    # Forward requests to another API
     path(f"{URL_PREFIX}/{settings.ROUTE_PATH}/", include("api_proxy.urls")),
 ]
 
+# Development pages: admin, login playground and the websocket / task examples.
+if settings.DEBUG:
+    urlpatterns += [
+        path(f"{URL_PREFIX}/__hidden_admin/", admin.site.urls),
+        path(f"{URL_PREFIX}/__hidden_dev_dashboard", include("dev_dashboard.urls")),
+        path(f"{URL_PREFIX}/ping", include("ping.urls")),
+    ]
 
-# -------------- START - Swagger View --------------
 
-# Http & Https
 class BothHttpAndHttpsSchemaGenerator(OpenAPISchemaGenerator):
+    """List both schemes so "Try it out" works behind HTTP and HTTPS proxies."""
+
     def get_schema(self, request=None, public=False):
         schema = super().get_schema(request, public)
         schema.schemes = ["http", "https"]
         return schema
 
+
 schema_view = get_schema_view(
     openapi.Info(
-        title="Backend service API",
+        title=f"{settings.PROJECT_NAME} API",
         default_version="v1",
-        description="API of backend services.",
+        description=f"API of {settings.PROJECT_NAME}.",
     ),
     public=True,
-    # permission_classes=(AllowAny,),
-    permission_classes = (IsAdminUser,), #is_staff才可使用
+    permission_classes=(IsAdminUser,),  # staff only
     generator_class=BothHttpAndHttpsSchemaGenerator,
 )
-# --------------- END - Swagger View ----------------
-
 
 urlpatterns += [
     re_path(
-        r"^api/__hidden_swagger(?P<format>\.json|\.yaml)$",
+        rf"^{URL_PREFIX}/__hidden_swagger\.(?P<format>json|yaml)$",
         schema_view.without_ui(cache_timeout=0),
         name="schema-json",
     ),
-    re_path(
-        r"^api/__hidden_swagger",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="schema-swagger-ui",
-    ),
-    re_path(
-        r"^api/__hidden_redoc",
-        schema_view.with_ui("redoc", cache_timeout=0),
-        name="schema-redoc",
-    ),
+    re_path(rf"^{URL_PREFIX}/__hidden_swagger", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
+    re_path(rf"^{URL_PREFIX}/__hidden_redoc", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ]
 
-# add static files support
-from django.conf.urls.static import static
+# Static files in development (WhiteNoise serves them when DEBUG is off).
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-if settings.DEBUG:
-    
-    # add debug toolbar
-    import debug_toolbar
-    urlpatterns += [
-        path(f"{URL_PREFIX}/__hidden_debug/", include(debug_toolbar.urls))
-    ]
-
-    # add schema graph
+# Debug tools, mounted only when settings.py installed them (DEBUG on).
+if apps.is_installed("debug_toolbar"):
+    urlpatterns += [path(f"{URL_PREFIX}/__hidden_debug/", include("debug_toolbar.urls"))]
+if apps.is_installed("schema_graph"):
     from schema_graph.views import Schema
-    urlpatterns += [
-        path(f"{URL_PREFIX}/__hidden_schema", Schema.as_view()),
-    ]
 
-    # add silk
+    urlpatterns += [path(f"{URL_PREFIX}/__hidden_schema", Schema.as_view(), name="schema-graph")]
+if apps.is_installed("silk"):
     urlpatterns += [path(f"{URL_PREFIX}/silk/", include("silk.urls", namespace="silk"))]
-
-admin.autodiscover()

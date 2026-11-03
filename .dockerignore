@@ -1,0 +1,9 @@
+.git
+.github
+.env
+docs
+**/__pycache__
+**/*.py[cod]
+backend/staticfiles
+backend/logs
+backend/media

@@ -1,0 +1,31 @@
+{% extends "dev_dashboard/layout.html" %}
+{% load static %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<main class="center">
+  <section class="card">
+    <h1>Sign in</h1>
+    <p class="muted">Use a Django user. <strong>Session login</strong> signs this browser in; <strong>JWT login</strong> stores an access and a refresh token instead.</p>
+    {% if error %}<p class="note bad">{{ error }}</p>{% endif %}
+    <p class="note" id="message" hidden></p>
+    <form id="login-form" method="post" action="{% url 'dev-login' %}"
+          data-token-url="{% url 'token_get' %}" data-dashboard-url="{% url 'dev-dashboard' %}">
+      {% csrf_token %}
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn primary">Session login</button>
+        <button type="button" class="btn" id="jwt-login">JWT login</button>
+      </div>
+    </form>
+    <p class="hint">No user yet? Run <code>bash dev-tool.sh create-superuser</code>.</p>
+  </section>
+</main>
+<script src="{% static 'js/login.js' %}"></script>
+{% endblock %}

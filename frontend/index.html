@@ -1,2 +1,58 @@
-Hello
-This is index!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your frontend goes here</title>
+  <!-- Placeholder page served by NGINX from ./frontend. Replace this folder with your built frontend. -->
+  <style>
+    :root { --bg:#f4f6f5; --surface:#fff; --text:#17201c; --muted:#5d6b64; --border:#d9e1dd; --accent:#0c6e4f; --soft:#dff2ea; --bad:#b42318; --badsoft:#fde8e6; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#0f1412; --surface:#171e1b; --text:#e6ece9; --muted:#93a39b; --border:#2c3833; --accent:#3fbf8f; --soft:#163a2d; --bad:#ff8a7a; --badsoft:#3a1b17; color-scheme: dark; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: var(--bg); color: var(--text);
+           font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
+    main { width: min(640px, 100%); }
+    h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -0.01em; }
+    p { margin: 0 0 18px; color: var(--muted); }
+    code { font: 0.86em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .status { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--border); color: var(--muted); margin-bottom: 14px; }
+    .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .status.ok { background: var(--soft); color: var(--accent); }
+    .status.bad { background: var(--badsoft); color: var(--bad); }
+    .links { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 0 0 22px; padding: 0; list-style: none; }
+    .links a { display: block; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); text-decoration: none; }
+    .links a:hover { border-color: var(--accent); }
+    .links strong { display: block; }
+    .links span { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="status" id="health">checking backend…</span>
+    <h1>Your frontend goes here</h1>
+    <p>NGINX serves this page from <code>frontend/</code>. Put your built frontend in that folder, or point NGINX at a dev server (see <code>nginx/default.conf</code>). Everything under <code>/api</code> and <code>/ws</code> goes to Django.</p>
+    <ul class="links">
+      <li><a href="/api/__hidden_dev_dashboard"><strong>Login playground</strong><span>session, JWT, social login</span></a></li>
+      <li><a href="/api/ping/index"><strong>WebSocket &amp; tasks</strong><span>Channels and django-q2</span></a></li>
+      <li><a href="/api/__hidden_admin/"><strong>Admin</strong><span>users, login history</span></a></li>
+      <li><a href="/api/__hidden_swagger"><strong>API docs</strong><span>Swagger (staff only)</span></a></li>
+      <li><a href="/api/health"><strong>Health check</strong><span>database and Redis</span></a></li>
+    </ul>
+    <p>The development pages exist only while <code>DEBUG=true</code>.</p>
+  </main>
+  <script>
+    fetch("/api/health")
+      .then((response) => response.json())
+      .then((data) => {
+        const el = document.getElementById("health");
+        el.textContent = data.status === "ok" ? "backend is healthy" : "backend has a problem";
+        el.className = "status " + (data.status === "ok" ? "ok" : "bad");
+      })
+      .catch(() => {
+        const el = document.getElementById("health");
+        el.textContent = "backend not reachable";
+        el.className = "status bad";
+      });
+  </script>
+</body>
+</html>

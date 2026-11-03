@@ -150,9 +150,9 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-<script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
+<!-- Pinned versions; the adapter bundle already includes date-fns. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -212,15 +212,14 @@ document.addEventListener('DOMContentLoaded', function() {
     Chart.defaults.color = themeColors.textColor;
     Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
 
-    const users = [...new Set(data.map(item => item.username))];
+    // One line per user id (two users may share a display name).
     const userIDs = [...new Set(data.map(item => item.id))];
-    const colors = generateColors(users.length);
-    const uniqueUsers = userIDs.map((id, index) => `[${id}] ${users[index]}`);
+    const colors = generateColors(userIDs.length);
 
-    const datasets = uniqueUsers.map((user, index) => {
-      const userLogins = data.filter(item => item.username === users[index]);
+    const datasets = userIDs.map((id, index) => {
+      const userLogins = data.filter(item => item.id === id);
       return {
-        label: user,
+        label: `[${id}] ${userLogins[0].username}`,
         data: userLogins.map(item => ({ x: item.date, y: item.count })),
         borderColor: colors[index],
         backgroundColor: colors[index],
@@ -359,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function fetchChartData(startDate, endDate) {
     const url = `chart-data/?start_date=${startDate}&end_date=${endDate}`;
     return fetch(url)
-      .then(response => response.json())
+      .then(response => response.ok ? response.json() : [])
       .catch(error => {
         console.error('Error fetching chart data:', error);
         return [];

@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  template:
+    name: New project from the template
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # A made-up project: proves that renaming happens in .env only.
+      PROJECT_NAME: acme-shop
+      HOST_PORT: "8080"
+      E2E_PASSWORD: e2e-password-123
+    defaults:
+      run:
+        working-directory: ../acme-shop
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Copy the files the way "Use this template" does (no history, new name)
+        working-directory: .
+        run: |
+          mkdir ../acme-shop
+          git archive HEAD | tar -x -C ../acme-shop
+          cd ../acme-shop
+          cp .env.example .env
+          sed -i "s/^PROJECT_NAME=.*/PROJECT_NAME=$PROJECT_NAME/; s/^HOST_PORT=.*/HOST_PORT=$HOST_PORT/" .env
+
+      - name: Build and start PostgreSQL, Redis, Django and NGINX
+        run: docker compose up --detach --build --wait --wait-timeout 300
+
+      - name: Containers are named after the new project
+        run: |
+          docker compose ps
+          for service in postgres redis api nginx; do
+            docker inspect "$PROJECT_NAME-$service" --format '{{.Name}}: {{.State.Status}}'
+          done
+
+      - name: Migrations are committed and up to date
+        run: docker compose exec -T backend-api python manage.py makemigrations --check --dry-run
+
+      - name: Tests (pytest, incl. websocket and background task)
+        run: docker compose exec -T backend-api pytest
+
+      - name: End-to-end tests through NGINX (real worker, real websockets)
+        run: |
+          docker compose exec -T -e DJANGO_SUPERUSER_PASSWORD="$E2E_PASSWORD" backend-api \
+            python manage.py createsuperuser --noinput --username e2e --email e2e@example.com
+          docker compose exec -T -e E2E_BASE_URL=http://backend-nginx -e E2E_USERNAME=e2e -e E2E_PASSWORD="$E2E_PASSWORD" \
+            backend-api pytest -m e2e
+
+      - name: The published port answers
+        run: curl -fsS "http://localhost:$HOST_PORT/api/health"
+
+      - name: Production mode boots with daphne and hides the development pages
+        run: |
+          sed -i "s/^DEBUG=.*/DEBUG=false/; s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" .env
+          docker compose up --detach --wait --wait-timeout 180 backend-api
+          docker compose exec -T backend-api python manage.py check --deploy --fail-level ERROR
+          docker compose exec -T backend-api pgrep -fa daphne
+          curl -fsS "http://localhost:$HOST_PORT/api/health"
+          test "$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$HOST_PORT/api/__hidden_dev_dashboard")" = 404
+
+      - name: Container logs
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Clean up
+        if: always()
+        run: docker compose down --volumes
