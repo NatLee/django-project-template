@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+<header class="topbar">
+  <a class="brand" href="{% url 'dev-dashboard' %}">
+    <span class="brand-mark" aria-hidden="true">dj</span>
+    <span>{{ PROJECT_NAME }} <small>dev</small></span>
+  </a>
+  <nav class="nav" aria-label="Development pages">
+    {% url 'dev-dashboard' as dashboard_url %}
+    {% url 'ping-index' as ping_url %}
+    <a href="{{ dashboard_url }}" {% if request.path == dashboard_url %}aria-current="page"{% endif %}>Login playground</a>
+    <a href="{{ ping_url }}" {% if request.path == ping_url %}aria-current="page"{% endif %}>WebSocket &amp; tasks</a>
+    <a href="{% url 'admin:index' %}">Admin</a>
+    <a href="{% url 'schema-swagger-ui' %}">Swagger</a>
+    <a href="{% url 'schema-redoc' %}">Redoc</a>
+  </nav>
+  <div class="who">
+    {% if request.user.is_authenticated %}
+      <span>Session: <strong>{{ request.user }}</strong></span>
+      <a class="btn small" href="{% url 'dev-session-logout' %}">Sign out</a>
+    {% else %}
+      <a class="btn small" href="{% url 'dev-login' %}">Sign in</a>
+    {% endif %}
+  </div>
+</header>
+{% block content %}{% endblock %}
+{% endblock %}

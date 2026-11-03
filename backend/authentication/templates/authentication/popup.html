@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block body %}
+<main class="center full">
+  <section class="card">
+    <div class="status-icon {{ success|yesno:'ok,bad' }}" aria-hidden="true">{{ success|yesno:"✓,!" }}</div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ message }}</p>
+    <p class="hint" id="countdown-text">This window closes in <span id="countdown">3</span> seconds.</p>
+  </section>
+</main>
+{{ tokens|json_script:"social-tokens" }}
+<script>
+  (function () {
+    // The dashboard that opened this popup watches localStorage for "loginStatus".
+    localStorage.removeItem("loginStatus");
+    var tokens = JSON.parse(document.getElementById("social-tokens").textContent);
+    if (tokens) {
+      localStorage.setItem("access_token", tokens.access_token);
+      localStorage.setItem("refresh_token", tokens.refresh_token);
+    }
+    {% if success %}localStorage.setItem("loginStatus", "success");{% endif %}
+
+    var seconds = 3;
+    var counter = document.getElementById("countdown");
+    var timer = setInterval(function () {
+      seconds -= 1;
+      counter.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(timer);
+        document.getElementById("countdown-text").textContent = "You can close this window.";
+        window.close();
+      }
+    }, 1000);
+  })();
+</script>
+{% endblock %}
