@@ -182,3 +182,7 @@ Rebuild from scratch, including the database: `docker compose down -v && docker 
 Fair question. An assistant can produce a settings file, a JWT view or a websocket consumer in seconds. What it can't give you is the part that takes the time: knowing that this particular combination of versions boots, that social login really ends with a token in your frontend, that the worker picks tasks up, that the websocket survives the NGINX hop, and that `DEBUG=false` is actually safe. This repo is that combination, run and tested end to end in CI.
 
 It also makes a good starting point for the assistant itself. A small, consistent codebase with tests and a CI job gives a coding agent working examples to copy and a quick way to check its own changes (`bash dev-tool.sh test`), which beats generating the whole stack from scratch every time.
+
+## License
+
+The template itself is licensed under [Apache-2.0](LICENSE). What you build on top of it is yours to license however you like.
